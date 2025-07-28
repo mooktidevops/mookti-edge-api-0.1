@@ -1,0 +1,22 @@
+{
+  "name": "mookti-edge-api",
+  "version": "1.0.0",
+  "description": "Edge API for Mookti MVP - Claude API proxy and vector search",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.20.1",
+    "@pinecone-database/pinecone": "^2.0.1",
+    "@vercel/kv": "^1.0.1",
+    "firebase-admin": "^12.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@vercel/node": "^3.0.0",
+    "typescript": "^5.3.3",
+    "vercel": "^33.0.0"
+  }
+}
