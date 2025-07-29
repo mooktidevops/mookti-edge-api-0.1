@@ -16,7 +16,7 @@ let pineconeClient: Pinecone | null = null;
 function getPineconeClient() {
   if (!pineconeClient) {
     pineconeClient = new Pinecone({
-      apiKey: process.env.PINECONE_API_KEY || '',
+      apiKey: process.env.pinecone_api_key || '',
     });
   }
   return pineconeClient;

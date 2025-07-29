@@ -18,7 +18,7 @@ interface ChatRequest {
 }
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
+  apiKey: process.env.anthropic_api_key || '',
 });
 
 let pineconeClient: Pinecone | null = null;
@@ -26,7 +26,7 @@ let pineconeClient: Pinecone | null = null;
 function getPineconeClient() {
   if (!pineconeClient) {
     pineconeClient = new Pinecone({
-      apiKey: process.env.PINECONE_API_KEY || '',
+      apiKey: process.env.pinecone_api_key || '',
     });
   }
   return pineconeClient;

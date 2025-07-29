@@ -11,7 +11,7 @@ export const config = {
 };
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
+  apiKey: process.env.anthropic_api_key || '',
 });
 
 export default async function handler(req: Request): Promise<Response> {
