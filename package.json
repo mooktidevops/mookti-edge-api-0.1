@@ -10,7 +10,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.1",
     "@pinecone-database/pinecone": "^2.0.1",
-    "@vercel/kv": "^1.0.1"
+    "@vercel/kv": "^1.0.1",
+    "jose": "^6.0.12"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
