@@ -2,6 +2,7 @@
 // Handles authenticated requests to Pinecone for similarity search
 
 import { Pinecone } from '@pinecone-database/pinecone';
+import { VoyageAIClient } from 'voyageai';
 import { verifyFirebaseToken } from '../lib/auth';
 import type { SearchRequest, SearchResult, ErrorResponse } from '../lib/types';
 
@@ -11,6 +12,7 @@ export const config = {
 };
 
 let pineconeClient: Pinecone | null = null;
+let voyageClient: VoyageAIClient | null = null;
 
 // Initialize Pinecone client
 function getPineconeClient() {
@@ -20,6 +22,16 @@ function getPineconeClient() {
     });
   }
   return pineconeClient;
+}
+
+// Initialize Voyage AI client
+function getVoyageClient() {
+  if (!voyageClient) {
+    voyageClient = new VoyageAIClient({
+      apiKey: process.env.voyage_api_key || '',
+    });
+  }
+  return voyageClient;
 }
 
 export default async function handler(req: Request): Promise<Response> {
@@ -63,22 +75,35 @@ export default async function handler(req: Request): Promise<Response> {
       );
     }
 
-    // For the search endpoint, we expect the query to already be an embedding
-    // In a full implementation, you might call Voyage AI here to generate embeddings
-    // For now, we'll assume the client sends the embedding as the query
-    
     const topK = body.topK || 5;
     const startTime = Date.now();
 
+    // Generate embedding for the query text using Voyage AI
+    const voyage = getVoyageClient();
+    const embeddingResponse = await voyage.embed({
+      input: body.query,
+      model: 'voyage-2', // Same model used for the indexed content
+    });
+
+    if (!embeddingResponse.data || embeddingResponse.data.length === 0) {
+      return new Response(
+        JSON.stringify({
+          error: 'Failed to generate embedding',
+          code: 'EMBEDDING_ERROR',
+        }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const queryEmbedding = embeddingResponse.data[0].embedding;
+
     // Connect to Pinecone index
     const pc = getPineconeClient();
-    const index = pc.index('mookti-vectors'); // Your index name
+    const index = pc.index('mookti-vectors');
     
     // Perform similarity search
-    // Note: In production, you'd generate the embedding from the query text
-    // For now, this is a placeholder that expects pre-computed embeddings
     const queryResponse = await index.namespace('workplace-success').query({
-      vector: JSON.parse(body.query), // Expecting embedding array as JSON string
+      vector: queryEmbedding,
       topK,
       includeValues: false,
       includeMetadata: true,

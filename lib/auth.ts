@@ -1,31 +1,12 @@
 // Edge-compatible Firebase Auth verification using jose
-import { importX509, jwtVerify } from 'jose';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 import type { ErrorResponse } from './types';
 
-// Firebase public keys endpoint
-const FIREBASE_KEYS_URL = 'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
-
-// Cache for Firebase public keys
-let keysCache: { keys: any; expiry: number } | null = null;
-
-async function getFirebasePublicKeys() {
-  // Check cache
-  if (keysCache && keysCache.expiry > Date.now()) {
-    return keysCache.keys;
-  }
-
-  // Fetch new keys
-  const response = await fetch(FIREBASE_KEYS_URL);
-  const keys = await response.json();
-  
-  // Cache for 1 hour
-  keysCache = {
-    keys,
-    expiry: Date.now() + 3600000
-  };
-  
-  return keys;
-}
+// Firebase JWKS endpoint (compatible with jose)
+const getFirebaseJWKS = (projectId: string) => {
+  const jwksUri = `https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com`;
+  return createRemoteJWKSet(new URL(jwksUri));
+};
 
 export async function verifyFirebaseToken(authHeader: string | null): Promise<{
   success: boolean;
@@ -59,30 +40,14 @@ export async function verifyFirebaseToken(authHeader: string | null): Promise<{
   }
 
   try {
-    // Decode token header to get key ID
-    const [headerB64] = token.split('.');
-    const header = JSON.parse(atob(headerB64));
-    const kid = header.kid;
+    // Get JWKS for Firebase
+    const JWKS = getFirebaseJWKS(projectId);
 
-    if (!kid) {
-      throw new Error('No kid in token header');
-    }
-
-    // Get Firebase public keys
-    const keys = await getFirebasePublicKeys();
-    const publicKeyPem = keys[kid];
-
-    if (!publicKeyPem) {
-      throw new Error('Public key not found for kid: ' + kid);
-    }
-
-    // Import the public key
-    const publicKey = await importX509(publicKeyPem, 'RS256');
-
-    // Verify the token
-    const { payload } = await jwtVerify(token, publicKey, {
+    // Verify the token using JWKS
+    const { payload } = await jwtVerify(token, JWKS, {
       issuer: `https://securetoken.google.com/${projectId}`,
       audience: projectId,
+      algorithms: ['RS256'],
     });
 
     // Extract user info
@@ -98,6 +63,8 @@ export async function verifyFirebaseToken(authHeader: string | null): Promise<{
     };
   } catch (error: any) {
     console.error('Token verification failed:', error.message);
+    console.error('Error type:', error.constructor.name);
+    console.error('Error stack:', error.stack);
     
     let errorCode = 'AUTH_INVALID_TOKEN';
     let errorMessage = 'Invalid authentication token';
@@ -105,6 +72,10 @@ export async function verifyFirebaseToken(authHeader: string | null): Promise<{
     if (error.code === 'ERR_JWT_EXPIRED') {
       errorCode = 'AUTH_TOKEN_EXPIRED';
       errorMessage = 'Authentication token has expired';
+    } else if (error.message?.includes('RS256')) {
+      // This is the specific error we're seeing
+      console.error('Jose library error - attempting workaround');
+      errorMessage = 'JWT verification library error';
     }
     
     return {
