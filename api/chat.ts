@@ -4,7 +4,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { VoyageAIClient } from 'voyageai';
-// Using simplified auth temporarily to bypass jose library issues
+// Using JWKS-based auth to fix Edge Runtime compatibility
 import { verifyFirebaseToken } from '../lib/firebase-auth';
 
 export const config = {
