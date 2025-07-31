@@ -1,9 +1,10 @@
 // Firebase Auth verification for Edge Runtime
-// This file now re-exports the jose-based implementation
+// This file now re-exports the Edge-compatible JWKS implementation
 
-// Re-export the jose-based implementation
-export { verifyFirebaseToken, verifyFirebaseTokenSimple } from './firebase-auth-jose';
+// Re-export the Edge-compatible implementation that uses JWKS
+export { verifyFirebaseToken, verifyFirebaseTokenSimple } from './firebase-auth-edge';
 
-// Note: The previous simplified implementation has been moved to deprecated/firebase-auth-simple.ts
-// The new implementation uses proper JWT signature verification with jose library
-// See firebase-auth-jose.ts for the implementation details.
+// Note: The X.509 certificate-based implementation (firebase-auth-jose.ts) 
+// has compatibility issues with Vercel Edge Runtime.
+// The new implementation uses Google's JWKS endpoint which works better
+// in Edge Runtime environments.

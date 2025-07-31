@@ -1,7 +1,7 @@
-// Firebase Auth verification for Edge Runtime using jose
-// Implements proper JWT signature verification
+// Firebase Auth verification for Vercel Edge Runtime
+// Uses a simpler approach that works with Edge Runtime limitations
 
-import { importX509, jwtVerify } from 'jose';
+import { jwtVerify, createRemoteJWKSet } from 'jose';
 import type { ErrorResponse } from './types';
 
 interface DecodedToken {
@@ -19,47 +19,12 @@ interface DecodedToken {
   };
 }
 
-interface GooglePublicKeys {
-  [key: string]: string;
-}
+// Use Google's JWKS endpoint instead of X.509 certificates
+const JWKS = createRemoteJWKSet(
+  new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')
+);
 
-// Cache for Google's public keys
-let keysCache: { keys: GooglePublicKeys; expires: number } | null = null;
-
-// Fetch Google's public keys for Firebase token verification
-async function getGooglePublicKeys(): Promise<GooglePublicKeys> {
-  const now = Date.now();
-  
-  // Return cached keys if still valid
-  if (keysCache && keysCache.expires > now) {
-    return keysCache.keys;
-  }
-
-  try {
-    const response = await fetch(
-      'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com'
-    );
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch public keys: ${response.status}`);
-    }
-
-    const keys = await response.json() as GooglePublicKeys;
-    
-    // Cache for 1 hour (Google rotates keys periodically)
-    keysCache = {
-      keys,
-      expires: now + 3600000, // 1 hour
-    };
-
-    return keys;
-  } catch (error) {
-    console.error('Failed to fetch Google public keys:', error);
-    throw error;
-  }
-}
-
-// Verify Firebase ID token with proper signature verification
+// Verify Firebase ID token using JWKS (works better in Edge Runtime)
 export async function verifyFirebaseToken(authHeader: string | null): Promise<{
   success: boolean;
   userId?: string;
@@ -92,47 +57,11 @@ export async function verifyFirebaseToken(authHeader: string | null): Promise<{
   }
 
   try {
-    // Decode token header to get key ID
-    const [headerB64] = token.split('.');
-    const header = JSON.parse(
-      atob(headerB64.replace(/-/g, '+').replace(/_/g, '/'))
-    );
-    
-    if (!header.kid) {
-      return {
-        success: false,
-        error: {
-          error: 'Invalid token: missing key ID',
-          code: 'AUTH_INVALID_TOKEN',
-        },
-      };
-    }
-
-    // Get Google's public keys
-    const publicKeys = await getGooglePublicKeys();
-    const publicKey = publicKeys[header.kid];
-
-    if (!publicKey) {
-      return {
-        success: false,
-        error: {
-          error: 'Invalid token: unknown key ID',
-          code: 'AUTH_INVALID_TOKEN',
-        },
-      };
-    }
-
-    // Import the X.509 certificate and verify the token
-    try {
-      const key = await importX509(publicKey, header.alg || 'RS256');
-      
-      // Verify the token with jose
-      const { payload } = await jwtVerify(token, key, {
-        issuer: `https://securetoken.google.com/${projectId}`,
-        audience: projectId,
-      });
-      
-      const decodedToken = payload as unknown as DecodedToken;
+    // Verify the token using JWKS
+    const { payload } = await jwtVerify(token, JWKS, {
+      issuer: `https://securetoken.google.com/${projectId}`,
+      audience: projectId,
+    });
 
     const decodedToken = payload as unknown as DecodedToken;
 
