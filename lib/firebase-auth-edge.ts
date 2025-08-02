@@ -19,10 +19,8 @@ interface DecodedToken {
   };
 }
 
-// Use Google's JWKS endpoint instead of X.509 certificates
-const JWKS = createRemoteJWKSet(
-  new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')
-);
+// Google's JWKS endpoint URL for Firebase tokens
+const GOOGLE_JWKS_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 
 // Verify Firebase ID token using JWKS (works better in Edge Runtime)
 export async function verifyFirebaseToken(authHeader: string | null): Promise<{
@@ -57,6 +55,9 @@ export async function verifyFirebaseToken(authHeader: string | null): Promise<{
   }
 
   try {
+    // Create JWKS set at runtime to avoid Edge Runtime initialization issues
+    const JWKS = createRemoteJWKSet(new URL(GOOGLE_JWKS_URL));
+    
     // Verify the token using JWKS
     const { payload } = await jwtVerify(token, JWKS, {
       issuer: `https://securetoken.google.com/${projectId}`,
