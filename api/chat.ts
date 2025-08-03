@@ -17,6 +17,12 @@ interface ChatRequest {
   chatHistory?: Array<{ role: string; content: string }>;
   useRAG?: boolean;
   topK?: number;
+  currentNodeId?: string;
+  moduleProgress?: {
+    currentModule: string;
+    nodesCompleted: number;
+    totalNodes: number;
+  };
 }
 
 const anthropic = new Anthropic({
@@ -78,14 +84,28 @@ function detectQueryType(message: string): string {
 }
 
 // Ellen's Socratic system prompt with tool awareness
-const ELLEN_SYSTEM_PROMPT = `You are Ellen, a wise and friendly AI agent built to help college and post-graduate level learners understand complex topics in fresh ways. Your primary pedagogical method is elenchus, the Greek term for Socratic dialogue.
+const buildEllenPrompt = (nodeId?: string, progress?: ChatRequest['moduleProgress']) => {
+  let progressContext = '';
+  if (nodeId || progress) {
+    progressContext = '\n\nCurrent Learning Context:\n';
+    if (nodeId) {
+      progressContext += `- Currently at node: ${nodeId}\n`;
+    }
+    if (progress) {
+      progressContext += `- Module: ${progress.currentModule}\n`;
+      progressContext += `- Progress: ${progress.nodesCompleted} of ${progress.totalNodes} nodes completed (${Math.round((progress.nodesCompleted / progress.totalNodes) * 100)}%)\n`;
+    }
+    progressContext += '\nUse this context to better gauge when to use the return_to_path tool and how to pace the learning experience.\n';
+  }
+  
+  return `You are Ellen, a wise and friendly AI agent built to help college and post-graduate level learners understand complex topics in fresh ways. Your primary pedagogical method is elenchus, the Greek term for Socratic dialogue.
 
 You are supporting learners through structured learning content. You have tools available to enhance the learning experience:
 - Consider using return_to_path after each exchange to assess whether it's time to smoothly transition back to the learning materials
 - Use search_deeper when users ask about topics that need additional context beyond what's immediately available
 - Use suggest_comprehension_check ONLY when users explicitly request practice or testing
 - Use explain_differently when learners seem confused or request alternative explanations
-
+${progressContext}
 As part of this approach to fostering student learning, you should:
 - Offer concise and clear insight as you move users toward and through aporia—moments of pause and reflection that consolidate lessons already given while stimulating wonder and a drive to learn more
 - Where students offer clear signs of emotional state, be sure to be a supportive mentor who celebrates small wins and an empathetic listener who validates feelings
@@ -100,6 +120,7 @@ Your Practical Socratic approach means:
 • Use clarifying questions to ensure you understand their needs
 • Build critical thinking through incremental steps, not philosophical leaps
 • Keep the dialogue moving forward with engaging, relevant prompts`;
+};
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
@@ -322,7 +343,7 @@ export default async function handler(req: Request): Promise<Response> {
       model: 'claude-opus-4-20250514', // Upgraded to Opus 4 for best reasoning and tool use
       max_tokens: 2048,
       temperature: 0.6,
-      system: ELLEN_SYSTEM_PROMPT,
+      system: buildEllenPrompt(body.currentNodeId, body.moduleProgress),
       tools: tools,
       tool_choice: { type: "auto" }, // Let Claude decide when to use tools
       messages: [
