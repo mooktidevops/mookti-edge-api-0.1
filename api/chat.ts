@@ -202,14 +202,122 @@ export default async function handler(req: Request): Promise<Response> {
     
     fullPrompt += `<response_guidelines>\n- Answer direct questions clearly first\n- Include relevant data or research naturally\n- Follow with ONE focused question that moves dialogue forward\n- Keep questions at appropriate depth for user's engagement level\n- If creating aporia, frame as productive reflection, not confusion\n- When challenging assumptions, be empathetic and constructive\n</response_guidelines>`;
 
-    // Call Claude API
+    // TODO: Migrate to Vercel AI SDK in post-MVP phase to enable:
+    // - User model selection (Haiku/Sonnet/Opus)
+    // - Streaming responses
+    // - Unified tool handling across LLM providers
+    // - Better error recovery and retry logic
+    
+    // Define learning-specific tools for Ellen
+    const tools = [
+      {
+        name: "return_to_path",
+        description: "Guide the conversation back to the learning path. Use when user's question has been addressed or when you want to continue the structured learning.",
+        input_schema: {
+          type: "object",
+          properties: {
+            transition_type: {
+              type: "string",
+              enum: ["answered_returning", "will_be_covered", "tangent_redirect"],
+              description: "How to transition: answered_returning (question answered, returning to path), will_be_covered (acknowledge good question, it's coming up), tangent_redirect (gently redirect from off-topic)"
+            },
+            transition_message: {
+              type: "string",
+              description: "A smooth, conversational transition that connects the discussion back to the learning path"
+            },
+            conceptual_bridge: {
+              type: "string",
+              description: "How the user's question relates to the current or upcoming content"
+            }
+          },
+          required: ["transition_type", "transition_message", "conceptual_bridge"]
+        }
+      },
+      {
+        name: "search_deeper",
+        description: "Search for additional context beyond what's provided in the current RAG results. Use when user asks about something not fully covered in the available context.",
+        input_schema: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "What to search for in the extended learning materials"
+            },
+            search_scope: {
+              type: "string",
+              enum: ["current_module", "all_modules", "related_concepts"],
+              description: "Where to search"
+            },
+            reason: {
+              type: "string",
+              description: "Why this additional context is needed"
+            }
+          },
+          required: ["query", "search_scope", "reason"]
+        }
+      },
+      {
+        name: "suggest_comprehension_check",
+        description: "Suggest a comprehension check when the user explicitly asks for practice or testing. This supplements (not replaces) the built-in expert-designed assessments in the learning path.",
+        input_schema: {
+          type: "object",
+          properties: {
+            concept: {
+              type: "string",
+              description: "The concept the user wants to practice or be tested on"
+            },
+            check_type: {
+              type: "string",
+              enum: ["practice_question", "application_scenario", "self_reflection"],
+              description: "Type of supplemental check to offer"
+            },
+            question: {
+              type: "string",
+              description: "The practice question or scenario to present"
+            },
+            preface: {
+              type: "string",
+              description: "Introduction explaining this is supplemental practice, not replacing the course assessments"
+            }
+          },
+          required: ["concept", "check_type", "question", "preface"]
+        }
+      },
+      {
+        name: "explain_differently",
+        description: "Provide an alternative explanation using analogies, examples, or different perspectives. Use when the user seems to need a different approach.",
+        input_schema: {
+          type: "object",
+          properties: {
+            concept: {
+              type: "string",
+              description: "What concept to explain differently"
+            },
+            approach: {
+              type: "string",
+              enum: ["analogy", "real_world_example", "visual_description", "step_by_step", "comparison"],
+              description: "How to explain it differently"
+            },
+            explanation: {
+              type: "string",
+              description: "The alternative explanation"
+            }
+          },
+          required: ["concept", "approach", "explanation"]
+        }
+      }
+    ];
+
+    // Call Claude API with tools
     const startTime = Date.now();
     
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-opus-4-20250514', // Upgraded to Opus 4 for best reasoning and tool use
       max_tokens: 2048,
       temperature: 0.6,
       system: ELLEN_SYSTEM_PROMPT,
+      tools: tools,
+      tool_choice: "auto", // Let Claude decide when to use tools
       messages: [
         {
           role: 'user',
@@ -219,22 +327,38 @@ export default async function handler(req: Request): Promise<Response> {
     });
 
     const duration = Date.now() - startTime;
-    const textContent = message.content
-      .filter(block => block.type === 'text')
-      .map(block => block.text)
-      .join('\n');
+    
+    // Process response to separate text and tool calls
+    const textContent = [];
+    const toolCalls = [];
+    
+    for (const block of message.content) {
+      if (block.type === 'text') {
+        textContent.push(block.text);
+      } else if (block.type === 'tool_use') {
+        toolCalls.push({
+          id: block.id,
+          tool: block.name,
+          input: block.input
+        });
+        
+        // Log tool usage for debugging
+        console.log(`Tool invoked: ${block.name}`, block.input);
+      }
+    }
 
-    console.log(`Chat request by ${userId}: ${duration}ms, ${message.usage.input_tokens + message.usage.output_tokens} tokens`);
+    console.log(`Chat request by ${userId}: ${duration}ms, ${message.usage.input_tokens + message.usage.output_tokens} tokens, ${toolCalls.length} tool calls`);
 
     return new Response(
       JSON.stringify({
-        content: textContent,
+        content: textContent.join('\n'),
         model: message.model,
         usage: {
           input_tokens: message.usage.input_tokens,
           output_tokens: message.usage.output_tokens,
         },
         ragUsed: body.useRAG !== false,
+        toolCalls: toolCalls, // Include tool calls in response
       }),
       {
         status: 200,
