@@ -2,7 +2,7 @@
 // Handles authenticated requests to Claude API with rate limiting
 
 import Anthropic from '@anthropic-ai/sdk';
-import { verifyFirebaseToken, checkRateLimit } from '../lib/auth';
+import { verifyFirebaseToken, checkRateLimit } from '../lib/auth-manual';
 import type { ClaudeRequest, ClaudeResponse, ErrorResponse } from '../lib/types';
 
 export const config = {

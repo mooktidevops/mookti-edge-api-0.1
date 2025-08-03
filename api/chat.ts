@@ -4,8 +4,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { VoyageAIClient } from 'voyageai';
-// Using JWKS-based auth to fix Edge Runtime compatibility
-import { verifyFirebaseToken } from '../lib/auth';
+// Using manual JWKS fetching for Edge Runtime compatibility
+import { verifyFirebaseToken } from '../lib/auth-manual';
 
 export const config = {
   runtime: 'edge',
