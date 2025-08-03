@@ -56,12 +56,14 @@ export async function verifyFirebaseToken(authHeader: string | null): Promise<{
 
   try {
     // Create JWKS set at runtime to avoid Edge Runtime initialization issues
+    // Note: createRemoteJWKSet returns a function that fetches keys
     const JWKS = createRemoteJWKSet(new URL(GOOGLE_JWKS_URL));
     
     // Verify the token using JWKS
     const { payload } = await jwtVerify(token, JWKS, {
       issuer: `https://securetoken.google.com/${projectId}`,
       audience: projectId,
+      algorithms: ['RS256'], // Explicitly specify the algorithm
     });
 
     const decodedToken = payload as unknown as DecodedToken;
