@@ -317,7 +317,7 @@ export default async function handler(req: Request): Promise<Response> {
       temperature: 0.6,
       system: ELLEN_SYSTEM_PROMPT,
       tools: tools,
-      tool_choice: "auto", // Let Claude decide when to use tools
+      tool_choice: { type: "auto" }, // Let Claude decide when to use tools
       messages: [
         {
           role: 'user',
