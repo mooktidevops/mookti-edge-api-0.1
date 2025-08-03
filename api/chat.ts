@@ -176,8 +176,8 @@ export default async function handler(req: Request): Promise<Response> {
           
           // Search for relevant content
           const pc = getPineconeClient();
-          const index = pc.index('mookti-learning-content');
-          const queryResponse = await index.query({
+          const index = pc.index('mookti-vectors');
+          const queryResponse = await index.namespace('workplace-success').query({
             vector: queryEmbedding,
             topK: body.topK || 3,
             includeValues: false,
