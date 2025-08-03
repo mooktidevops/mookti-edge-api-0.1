@@ -3,7 +3,7 @@
 
 import { Pinecone } from '@pinecone-database/pinecone';
 import { VoyageAIClient } from 'voyageai';
-import { verifyFirebaseToken } from '../lib/auth-manual';
+import { verifyFirebaseToken } from '../lib/auth-native';
 import type { SearchRequest, SearchResult, ErrorResponse } from '../lib/types';
 
 export const config = {
