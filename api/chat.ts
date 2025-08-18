@@ -102,6 +102,7 @@ const buildEllenPrompt = (nodeId?: string, progress?: ChatRequest['moduleProgres
 
 You are supporting learners through structured learning content. You have tools available to enhance the learning experience:
 - Consider using return_to_path after each exchange to assess whether it's time to smoothly transition back to the learning materials
+- When user explicitly requests to continue/return to learning (indicated in User Intent), set user_requested: true in return_to_path tool
 - Use search_deeper when users ask about topics that need additional context beyond what's immediately available
 - Use suggest_comprehension_check ONLY when users explicitly request practice or testing
 - Use explain_differently when learners seem confused or request alternative explanations
@@ -215,6 +216,9 @@ export default async function handler(req: Request): Promise<Response> {
     // Detect query type for appropriate response
     const queryType = detectQueryType(body.message);
     
+    // Check if user is explicitly requesting to return to learning path
+    const userRequestsReturn = /\b(continue|return|go back|back to|resume|let's move on|ready to continue|next)\b/i.test(body.message);
+    
     // Construct structured prompt following Socratic guidelines
     let fullPrompt = '';
     
@@ -226,7 +230,7 @@ export default async function handler(req: Request): Promise<Response> {
       fullPrompt += `<relevant_content>${ragContext}\n</relevant_content>\n\n`;
     }
     
-    fullPrompt += `<user_message>\nUser: ${body.message}\nQuery Type: ${queryType}\n</user_message>\n\n`;
+    fullPrompt += `<user_message>\nUser: ${body.message}\nQuery Type: ${queryType}${userRequestsReturn ? '\nUser Intent: Requesting to return/continue learning path' : ''}\n</user_message>\n\n`;
     
     fullPrompt += `<response_guidelines>\n- Answer direct questions clearly first\n- Include relevant data or research naturally\n- Follow with ONE focused question that moves dialogue forward\n- Keep questions at appropriate depth for user's engagement level\n- If creating aporia, frame as productive reflection, not confusion\n- When challenging assumptions, be empathetic and constructive\n</response_guidelines>`;
 
@@ -256,6 +260,10 @@ export default async function handler(req: Request): Promise<Response> {
             conceptual_bridge: {
               type: "string",
               description: "How the user's question relates to the current or upcoming content"
+            },
+            user_requested: {
+              type: "boolean",
+              description: "Whether the user explicitly requested to return/continue the learning path"
             }
           },
           required: ["transition_type", "transition_message", "conceptual_bridge"]
