@@ -1,10 +1,12 @@
 // Vector Search Edge Function
 // Handles authenticated requests to Pinecone for similarity search
+// Supports dual-namespace queries (public + user uploads)
 
 import { Pinecone } from '@pinecone-database/pinecone';
 import { VoyageAIClient } from 'voyageai';
 import { verifyFirebaseToken } from '../lib/auth-native';
 import type { SearchRequest, SearchResult, ErrorResponse } from '../lib/types';
+import { EntitlementsManager } from '../src/entitlements/manager';
 
 export const config = {
   runtime: 'edge',
@@ -76,13 +78,23 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     const topK = body.topK || 5;
+    const includeUserDocs = body.includeUserDocs !== false; // Default true
     const startTime = Date.now();
+
+    // Get user entitlements
+    const entitlements = await EntitlementsManager.getInstance().getUserEntitlements(userId);
+    
+    // Check if user can access user docs
+    if (includeUserDocs && !entitlements.plan.features.uploads_enabled) {
+      // Silently exclude user docs if not entitled
+      body.includeUserDocs = false;
+    }
 
     // Generate embedding for the query text using Voyage AI
     const voyage = getVoyageClient();
     const embeddingResponse = await voyage.embed({
       input: body.query,
-      model: 'voyage-2', // Same model used for the indexed content
+      model: 'voyage-large-2-instruct', // Updated model for better retrieval
     });
 
     if (!embeddingResponse.data || embeddingResponse.data.length === 0) {
@@ -101,26 +113,56 @@ export default async function handler(req: Request): Promise<Response> {
     const pc = getPineconeClient();
     const index = pc.index('mookti-vectors');
     
-    // Perform similarity search
-    const queryResponse = await index.namespace('workplace-success').query({
-      vector: queryEmbedding,
-      topK,
-      includeValues: false,
-      includeMetadata: true,
-    });
+    // Prepare namespaces to query
+    const namespaces: string[] = ['public']; // Always search public content
+    if (includeUserDocs && entitlements.plan.features.uploads_enabled) {
+      namespaces.push(`u_${userId}`); // User-specific namespace
+    }
+
+    // Perform parallel similarity searches across namespaces
+    const searchPromises = namespaces.map(namespace =>
+      index.namespace(namespace).query({
+        vector: queryEmbedding,
+        topK,
+        includeValues: false,
+        includeMetadata: true,
+      })
+    );
+
+    const queryResponses = await Promise.all(searchPromises);
 
     const duration = Date.now() - startTime;
 
+    // Merge and sort results from all namespaces
+    const allMatches = queryResponses.flatMap((response, i) =>
+      response.matches.map(match => ({
+        ...match,
+        namespace: namespaces[i],
+        is_user_source: namespaces[i].startsWith('u_'),
+      }))
+    );
+
+    // Sort by score and limit to topK
+    allMatches.sort((a, b) => (b.score || 0) - (a.score || 0));
+    const topMatches = allMatches.slice(0, topK);
+
     // Format results
-    const results: SearchResult[] = queryResponse.matches.map(match => ({
+    const results: SearchResult[] = topMatches.map(match => ({
       id: match.id,
-      content: match.metadata?.content || '',
+      content: match.metadata?.content || match.metadata?.text || '',
       score: match.score || 0,
-      metadata: match.metadata,
+      metadata: {
+        ...match.metadata,
+        is_user_source: match.is_user_source,
+        namespace: match.namespace,
+      },
     }));
 
+    // Log usage for rate limiting
+    await EntitlementsManager.getInstance().logUsage(userId, 'search', 1);
+
     // Log search request
-    console.log(`Vector search by user ${userId}: ${results.length} results in ${duration}ms`);
+    console.log(`Vector search by user ${userId}: ${results.length} results from ${namespaces.join(', ')} in ${duration}ms`);
 
     return new Response(
       JSON.stringify({ results }),

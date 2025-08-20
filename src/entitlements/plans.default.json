@@ -1,0 +1,120 @@
+{
+  "plans": {
+    "free": {
+      "name": "free",
+      "display_name": "Free",
+      "features": {
+        "uploads_enabled": false,
+        "upload_size_limit_mb": 0,
+        "daily_upload_limit": 0,
+        "upload_total_storage_gb": 0,
+        "frontier_models": false,
+        "model_picker": false,
+        "advanced_tools": [],
+        "socratic_depth": 1,
+        "revision_scheduler": false,
+        "concept_maps": false,
+        "worked_examples": true,
+        "peer_instruction": false
+      },
+      "rate_limits": {
+        "requests_per_minute": 10,
+        "requests_per_hour": 100,
+        "tokens_per_day": 50000,
+        "uploads_per_day": 0
+      },
+      "model_access": {
+        "default_tier": "S",
+        "available_tiers": ["S"],
+        "escalation_allowed": false
+      }
+    },
+    "basic": {
+      "name": "basic",
+      "display_name": "Basic ($9/month)",
+      "features": {
+        "uploads_enabled": true,
+        "upload_size_limit_mb": 10,
+        "daily_upload_limit": 5,
+        "upload_total_storage_gb": 1,
+        "frontier_models": false,
+        "model_picker": false,
+        "advanced_tools": ["revision_scheduler"],
+        "socratic_depth": 2,
+        "revision_scheduler": true,
+        "concept_maps": true,
+        "worked_examples": true,
+        "peer_instruction": false
+      },
+      "rate_limits": {
+        "requests_per_minute": 30,
+        "requests_per_hour": 500,
+        "tokens_per_day": 200000,
+        "uploads_per_day": 5
+      },
+      "model_access": {
+        "default_tier": "S",
+        "available_tiers": ["S", "M"],
+        "escalation_allowed": true
+      }
+    },
+    "pro": {
+      "name": "pro",
+      "display_name": "Pro ($29/month)",
+      "features": {
+        "uploads_enabled": true,
+        "upload_size_limit_mb": 50,
+        "daily_upload_limit": 20,
+        "upload_total_storage_gb": 10,
+        "frontier_models": true,
+        "model_picker": true,
+        "advanced_tools": ["revision_scheduler", "peer_instruction", "calibration", "concept_mapper"],
+        "socratic_depth": 3,
+        "revision_scheduler": true,
+        "concept_maps": true,
+        "worked_examples": true,
+        "peer_instruction": true
+      },
+      "rate_limits": {
+        "requests_per_minute": 60,
+        "requests_per_hour": 1000,
+        "tokens_per_day": 1000000,
+        "uploads_per_day": 20
+      },
+      "model_access": {
+        "default_tier": "M",
+        "available_tiers": ["S", "M", "L", "F"],
+        "escalation_allowed": true
+      }
+    },
+    "enterprise": {
+      "name": "enterprise",
+      "display_name": "Enterprise (Custom)",
+      "features": {
+        "uploads_enabled": true,
+        "upload_size_limit_mb": 200,
+        "daily_upload_limit": 100,
+        "upload_total_storage_gb": 100,
+        "frontier_models": true,
+        "model_picker": true,
+        "advanced_tools": ["all"],
+        "socratic_depth": 5,
+        "revision_scheduler": true,
+        "concept_maps": true,
+        "worked_examples": true,
+        "peer_instruction": true
+      },
+      "rate_limits": {
+        "requests_per_minute": 200,
+        "requests_per_hour": 5000,
+        "tokens_per_day": 10000000,
+        "uploads_per_day": 100
+      },
+      "model_access": {
+        "default_tier": "L",
+        "available_tiers": ["S", "M", "L", "F"],
+        "escalation_allowed": true
+      }
+    }
+  }
+}
