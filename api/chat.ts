@@ -1,6 +1,7 @@
 // Combined Chat Edge Function
 // Performs vector search for context, then calls Claude API
 
+import '../lib/edge-polyfills';
 import Anthropic from '@anthropic-ai/sdk';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { VoyageAIClient } from 'voyageai';

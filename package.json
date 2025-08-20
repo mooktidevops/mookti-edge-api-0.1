@@ -12,6 +12,7 @@
     "upload-embeddings": "ts-node scripts/uploadEmbeddings.ts",
     "index-content": "ts-node scripts/indexContent.ts",
     "test-search": "ts-node scripts/testSearch.ts",
+    "test-api": "ts-node scripts/testAPI.ts",
     "test": "jest",
     "lint": "eslint . --ext .ts,.tsx"
   },

@@ -1,6 +1,7 @@
 // Test endpoint for search API - NO AUTHENTICATION
 // This is for testing only and should be removed before production
 
+import '../lib/edge-polyfills';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { VoyageAIClient } from 'voyageai';
 

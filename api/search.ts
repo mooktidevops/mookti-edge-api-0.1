@@ -2,6 +2,7 @@
 // Handles authenticated requests to Pinecone for similarity search
 // Supports dual-namespace queries (public + user uploads)
 
+import '../lib/edge-polyfills';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { VoyageAIClient } from 'voyageai';
 import { verifyFirebaseToken } from '../lib/auth-native';
