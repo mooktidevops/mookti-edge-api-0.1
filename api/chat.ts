@@ -148,7 +148,7 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     const userId = authResult.userId!;
-    const body: ChatRequest = await req.json();
+    const body = await req.json() as ChatRequest;
     
     if (!body.message) {
       return new Response(
@@ -179,7 +179,7 @@ export default async function handler(req: Request): Promise<Response> {
           const pc = getPineconeClient();
           const index = pc.index('mookti-vectors');
           const queryResponse = await index.namespace('workplace-success').query({
-            vector: queryEmbedding,
+            vector: queryEmbedding as number[],
             topK: body.topK || 3,
             includeValues: false,
             includeMetadata: true,
@@ -352,15 +352,15 @@ export default async function handler(req: Request): Promise<Response> {
       max_tokens: 2048,
       temperature: 0.6,
       system: buildEllenPrompt(body.currentNodeId, body.moduleProgress),
-      tools: tools,
-      tool_choice: { type: "auto" }, // Let Claude decide when to use tools
+      tools: tools as any, // Type assertion for tools array
+      tool_choice: { type: "auto" } as any, // Let Claude decide when to use tools
       messages: [
         {
           role: 'user',
           content: fullPrompt,
         },
       ],
-    });
+    } as any);
 
     const duration = Date.now() - startTime;
     
@@ -373,13 +373,13 @@ export default async function handler(req: Request): Promise<Response> {
         textContent.push(block.text);
       } else if (block.type === 'tool_use') {
         toolCalls.push({
-          id: block.id,
-          tool: block.name,
-          input: block.input
+          id: (block as any).id,
+          tool: (block as any).name,
+          input: (block as any).input
         });
         
         // Log tool usage for debugging
-        console.log(`Tool invoked: ${block.name}`, block.input);
+        console.log(`Tool invoked: ${(block as any).name}`, (block as any).input);
       }
     }
 

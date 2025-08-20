@@ -134,33 +134,35 @@ export async function verifyFirebaseToken(authHeader: string | null): Promise<{
       
       const decodedToken = payload as unknown as DecodedToken;
 
-    const decodedToken = payload as unknown as DecodedToken;
+      // Additional Firebase-specific validations
+      const now = Math.floor(Date.now() / 1000);
+      
+      // Check auth_time is not in the future (with 5 min clock skew)
+      if (decodedToken.auth_time && decodedToken.auth_time > now + 300) {
+        return {
+          success: false,
+          error: {
+            error: 'Invalid token: auth_time in future',
+            code: 'AUTH_INVALID_TOKEN',
+          },
+        };
+      }
 
-    // Additional Firebase-specific validations
-    const now = Math.floor(Date.now() / 1000);
-    
-    // Check auth_time is not in the future (with 5 min clock skew)
-    if (decodedToken.auth_time && decodedToken.auth_time > now + 300) {
+      // Extract user info
+      const userId = decodedToken.sub;
+      const email = decodedToken.email;
+
+      console.log(`✅ Firebase token verified for user: ${userId}`);
+
       return {
-        success: false,
-        error: {
-          error: 'Invalid token: auth_time in future',
-          code: 'AUTH_INVALID_TOKEN',
-        },
+        success: true,
+        userId,
+        email,
       };
+    } catch (innerError: any) {
+      // Handle jose verification errors
+      throw innerError; // Re-throw to be caught by outer catch
     }
-
-    // Extract user info
-    const userId = decodedToken.sub;
-    const email = decodedToken.email;
-
-    console.log(`✅ Firebase token verified for user: ${userId}`);
-
-    return {
-      success: true,
-      userId,
-      email,
-    };
   } catch (error: any) {
     console.error('Token verification failed:', error.message);
     

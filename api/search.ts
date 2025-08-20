@@ -65,7 +65,7 @@ export default async function handler(req: Request): Promise<Response> {
     const userId = authResult.userId!;
 
     // Parse request body
-    const body: SearchRequest = await req.json();
+    const body = await req.json() as SearchRequest & { includeUserDocs?: boolean };
     
     if (!body.query || !body.query.trim()) {
       return new Response(
@@ -78,7 +78,7 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     const topK = body.topK || 5;
-    const includeUserDocs = body.includeUserDocs !== false; // Default true
+    const includeUserDocs = (body as any).includeUserDocs !== false; // Default true
     const startTime = Date.now();
 
     // Get user entitlements
@@ -87,7 +87,7 @@ export default async function handler(req: Request): Promise<Response> {
     // Check if user can access user docs
     if (includeUserDocs && !entitlements.plan.features.uploads_enabled) {
       // Silently exclude user docs if not entitled
-      body.includeUserDocs = false;
+      (body as any).includeUserDocs = false;
     }
 
     // Generate embedding for the query text using Voyage AI
@@ -122,7 +122,7 @@ export default async function handler(req: Request): Promise<Response> {
     // Perform parallel similarity searches across namespaces
     const searchPromises = namespaces.map(namespace =>
       index.namespace(namespace).query({
-        vector: queryEmbedding,
+        vector: queryEmbedding as number[],
         topK,
         includeValues: false,
         includeMetadata: true,
@@ -149,7 +149,7 @@ export default async function handler(req: Request): Promise<Response> {
     // Format results
     const results: SearchResult[] = topMatches.map(match => ({
       id: match.id,
-      content: match.metadata?.content || match.metadata?.text || '',
+      content: String(match.metadata?.content || match.metadata?.text || ''),
       score: match.score || 0,
       metadata: {
         ...match.metadata,

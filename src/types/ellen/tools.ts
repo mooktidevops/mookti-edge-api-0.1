@@ -1,3 +1,5 @@
+import { UserEntitlements } from './entitlements';
+
 export interface ToolDefinition {
   name: string;
   request_schema: string;
@@ -33,21 +35,5 @@ export interface ToolResponse {
     model_tier?: 'S' | 'M' | 'L' | 'F';
     latency_ms?: number;
     tokens_used?: number;
-  };
-}
-
-export interface UserEntitlements {
-  plan: 'free' | 'basic' | 'pro' | 'enterprise';
-  features: {
-    uploads_enabled: boolean;
-    upload_size_limit_mb: number;
-    daily_upload_limit: number;
-    frontier_models: boolean;
-    model_picker: boolean;
-    advanced_tools: boolean;
-  };
-  rate_limits: {
-    requests_per_minute: number;
-    tokens_per_day: number;
   };
 }

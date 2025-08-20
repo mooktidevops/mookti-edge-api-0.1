@@ -1,7 +1,18 @@
 export * from './socratic';
 export * from './formative';
-export * from './entitlements';
-export * from './tools';
+export type { 
+  PlanTier, 
+  PlanFeatures, 
+  RateLimits, 
+  ModelAccess,
+  UserEntitlements
+} from './entitlements';
+export type { 
+  ToolDefinition,
+  ToolRegistry,
+  ToolRequest,
+  ToolResponse
+} from './tools';
 
 export type ModelTier = 'S' | 'M' | 'L' | 'F';
 
@@ -17,15 +28,4 @@ export interface RetrievalSnippet {
   citation: string;
   score?: number;
   metadata?: Record<string, any>;
-}
-
-export interface ToolResponse {
-  success: boolean;
-  data?: any;
-  error?: string;
-  meta?: {
-    model_tier?: ModelTier;
-    latency_ms?: number;
-    tokens_used?: number;
-  };
 }

@@ -237,7 +237,7 @@ Level: ${request.level || 'intro'}`;
           date: date.toISOString().split('T')[0],
           topics: topicsForDay,
           duration_minutes: Math.floor(hoursPerDay * 60 / topicsForDay.length) * topicsForDay.length,
-          type: day < daysUntilExam / 3 ? 'new' : day < 2 * daysUntilExam / 3 ? 'review' : 'practice',
+          type: (day < daysUntilExam / 3 ? 'new' : day < 2 * daysUntilExam / 3 ? 'review' : 'practice') as 'new' | 'review' | 'practice',
         });
       }
     }
@@ -361,7 +361,7 @@ ${request.highlight_strategy ? 'Highlight the overall strategy.' : ''}`;
       },
     ];
 
-    const edges = [];
+    const edges: any[] = [];
     
     // Add related concepts
     const relatedConcepts = this.generateRelatedConcepts(request.central_concept, request.domain);

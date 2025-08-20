@@ -32,7 +32,8 @@ export default async function handler(req: Request): Promise<Response> {
     const userId = authResult.userId!;
     
     // Parse request
-    const { docId } = await req.json();
+    const body = await req.json() as { docId?: string };
+    const { docId } = body;
     
     if (!docId) {
       return new Response(

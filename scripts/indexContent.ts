@@ -196,7 +196,7 @@ class ContentIndexer {
 
         vectors.push({
           id: chunk.id,
-          values: response.data[0].embedding,
+          values: response.data![0].embedding,
           metadata: {
             topic_id: card.topic_id,
             title: card.title,

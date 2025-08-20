@@ -10,7 +10,7 @@ export const config = {
 
 // This would typically come from a database or CMS
 // For MVP, we'll define the structure here
-const LEARNING_PATHS = {
+const LEARNING_PATHS: Record<string, any> = {
   workplace_success: {
     id: 'workplace_success',
     name: 'Workplace Success',
@@ -31,7 +31,7 @@ const LEARNING_PATHS = {
 };
 
 // Sample node structure - in production, this would be loaded from a database
-const SAMPLE_NODES = {
+const SAMPLE_NODES: Record<string, any> = {
   '1': {
     id: '1',
     type: 'system',
@@ -156,7 +156,7 @@ export default async function handler(req: Request): Promise<Response> {
       
       // In production, this would fetch nodes within radius from database
       // For MVP, return sample data
-      const contextNodes = {};
+      const contextNodes: Record<string, any> = {};
       
       // Simple radius implementation - in production use graph traversal
       if (SAMPLE_NODES[nodeId]) {

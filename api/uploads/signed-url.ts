@@ -29,7 +29,8 @@ export default async function handler(req: Request): Promise<Response> {
     const userId = authResult.userId!;
     
     // Parse request
-    const { fileName, fileSize, fileType } = await req.json();
+    const body = await req.json() as { fileName?: string; fileSize?: number; fileType?: string };
+    const { fileName, fileSize, fileType } = body;
     
     if (!fileName || !fileSize || !fileType) {
       return new Response(

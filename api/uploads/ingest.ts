@@ -81,6 +81,11 @@ export default async function handler(req: Request): Promise<Response> {
           input: chunk.text,
           model: 'voyage-large-2-instruct',
         });
+        
+        if (!response.data || response.data.length === 0) {
+          throw new Error('Failed to generate embedding');
+        }
+        
         return {
           text: chunk.text,
           embedding: response.data[0].embedding,
@@ -89,10 +94,10 @@ export default async function handler(req: Request): Promise<Response> {
       })
     );
 
-    // Prepare vectors for Pinecone
+    // Prepare vectors for Pinecone - ensure values is always defined
     const vectors = embeddings.map((item, index) => ({
       id: `${docId}_chunk_${index}`,
-      values: item.embedding,
+      values: item.embedding || [], // Ensure values is never undefined
       metadata: {
         doc_id: docId,
         chunk_index: index,

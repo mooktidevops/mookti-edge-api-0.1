@@ -57,7 +57,7 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     // Parse request body
-    const body: ClaudeRequest = await req.json();
+    const body = await req.json() as ClaudeRequest;
     
     if (!body.prompt) {
       return new Response(

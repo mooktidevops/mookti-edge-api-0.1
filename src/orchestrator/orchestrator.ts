@@ -1,5 +1,5 @@
 import { ToolLoader } from './toolLoader';
-import { ToolRequest, ToolResponse, UserEntitlements, ModelTier } from '../types/ellen';
+import { ToolRequest, ToolResponse, UserEntitlements, ModelTier, ToolDefinition } from '../types/ellen';
 import { SocraticController } from '../controllers/socraticController';
 import { FormativeController } from '../controllers/formativeController';
 

@@ -150,7 +150,7 @@ export default async function handler(req: Request): Promise<Response> {
     
     // POST /api/progress/sync
     if (req.method === 'POST' && pathSegments[2] === 'sync') {
-      const body: SyncRequest = await req.json();
+      const body = await req.json() as SyncRequest;
       
       if (!body.path_id || !body.current_node || !body.completed_nodes) {
         return new Response(

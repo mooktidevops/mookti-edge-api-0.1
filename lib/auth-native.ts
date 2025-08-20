@@ -55,7 +55,7 @@ async function getGooglePublicKeys() {
 }
 
 // Convert JWK to CryptoKey
-async function jwkToCryptoKey(jwk: any): Promise<CryptoKey> {
+async function jwkToCryptoKey(jwk: any): Promise<any> {
   return await crypto.subtle.importKey(
     'jwk',
     jwk,
@@ -92,7 +92,7 @@ function parseJWT(token: string) {
 // Verify JWT signature using Web Crypto API
 async function verifyJWTSignature(
   token: string,
-  publicKey: CryptoKey
+  publicKey: any
 ): Promise<boolean> {
   const { signatureB64, signedData } = parseJWT(token);
   
