@@ -1,6 +1,5 @@
 import { verifyFirebaseToken } from '../../lib/auth-native';
 import { EntitlementsManager } from '../../src/entitlements/manager';
-import crypto from 'crypto';
 
 export const config = {
   runtime: 'edge',
@@ -82,9 +81,15 @@ export default async function handler(req: Request): Promise<Response> {
       );
     }
 
-    // Generate secure upload URL and document ID
-    const docId = `doc_${userId}_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
-    const uploadToken = crypto.randomBytes(32).toString('hex');
+    // Generate secure upload URL and document ID using Web Crypto API
+    const randomBytes = new Uint8Array(8);
+    crypto.getRandomValues(randomBytes);
+    const docIdSuffix = Array.from(randomBytes, b => b.toString(16).padStart(2, '0')).join('');
+    const docId = `doc_${userId}_${Date.now()}_${docIdSuffix}`;
+    
+    const tokenBytes = new Uint8Array(32);
+    crypto.getRandomValues(tokenBytes);
+    const uploadToken = Array.from(tokenBytes, b => b.toString(16).padStart(2, '0')).join('');
     
     // Store upload token in KV (expires in 1 hour)
     const kv = await import('@vercel/kv').then(m => m.kv);
