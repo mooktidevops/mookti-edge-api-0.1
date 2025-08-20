@@ -6,7 +6,12 @@
     "dev": "vercel dev",
     "deploy": "vercel --prod",
     "typecheck": "tsc --noEmit",
+    "setup-pinecone": "ts-node scripts/setupPinecone.ts",
+    "check-pinecone": "ts-node scripts/checkPinecone.ts",
+    "generate-embeddings": "ts-node scripts/generateEmbeddings.ts",
+    "upload-embeddings": "ts-node scripts/uploadEmbeddings.ts",
     "index-content": "ts-node scripts/indexContent.ts",
+    "test-search": "ts-node scripts/testSearch.ts",
     "test": "jest",
     "lint": "eslint . --ext .ts,.tsx"
   },

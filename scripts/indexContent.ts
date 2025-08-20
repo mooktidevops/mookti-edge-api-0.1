@@ -205,9 +205,13 @@ class ContentIndexer {
             level: card.level,
             chunk_type: chunk.type,
             text: chunk.text.substring(0, 1000), // Truncate for metadata
-            methods: card.methods,
-            retrieval_queries: card.retrieval_queries,
-            citations: card.citations,
+            // Flatten arrays to strings for Pinecone compatibility
+            methods: Array.isArray(card.methods) ? card.methods.join(', ') : '',
+            retrieval_queries: Array.isArray(card.retrieval_queries) ? card.retrieval_queries.join(' | ') : '',
+            // Flatten citations object array to string
+            citations: Array.isArray(card.citations) ? 
+              card.citations.map((c: any) => `${c.title || ''} - ${c.source || ''}`).filter(s => s !== ' - ').join(' | ') : '',
+            license: card.license || 'CC-BY-4.0',
           },
         });
       } catch (error) {
@@ -298,11 +302,9 @@ Examples:
 }
 
 // Run if called directly
-if (require.main === module) {
-  main().catch(error => {
-    console.error('❌ Fatal error:', error);
-    process.exit(1);
-  });
-}
+main().catch(error => {
+  console.error('❌ Fatal error:', error);
+  process.exit(1);
+});
 
 export { ContentIndexer };
