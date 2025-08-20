@@ -1,3 +1,4 @@
+import '../../lib/edge-polyfills';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { VoyageAIClient } from 'voyageai';
 import { EntitlementsManager } from '../../src/entitlements/manager';

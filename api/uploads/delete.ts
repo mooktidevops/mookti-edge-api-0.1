@@ -1,3 +1,4 @@
+import '../../lib/edge-polyfills';
 import { verifyFirebaseToken } from '../../lib/auth-native';
 import { Pinecone } from '@pinecone-database/pinecone';
 
