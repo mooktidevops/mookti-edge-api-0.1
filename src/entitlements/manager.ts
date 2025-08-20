@@ -1,5 +1,6 @@
 import { PlanTier, UserEntitlements } from '../types/ellen/entitlements';
 import planDefaults from './plans.default.json';
+import { redisMonitor } from '../monitoring/redis-monitor';
 
 export class EntitlementsManager {
   private static instance: EntitlementsManager;
@@ -20,7 +21,8 @@ export class EntitlementsManager {
   private async getKV() {
     if (!this.kv) {
       const { kv } = await import('@vercel/kv');
-      this.kv = kv;
+      // Wrap KV with monitoring
+      this.kv = redisMonitor.wrapKV(kv);
     }
     return this.kv;
   }
