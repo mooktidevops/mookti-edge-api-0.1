@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mookti Chat Test (No Auth)</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .provider-select {
+            margin-bottom: 20px;
+        }
+        select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .user-message {
+            background: #e3f2fd;
+            margin-left: 20%;
+            text-align: right;
+        }
+        .assistant-message {
+            background: #f3e5f5;
+            margin-right: 20%;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #e8f4f8;
+            border-radius: 4px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .typing {
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Mookti Chat Test (No Auth Required)</h1>
+        
+        <div class="info">
+            <strong>Test Mode:</strong> This endpoint bypasses authentication for development testing.<br>
+            <strong>Available Providers:</strong> OpenAI (GPT-4o-mini), Anthropic (Claude Haiku), Google (Gemini Flash)<br>
+            <strong>Purpose:</strong> Test Ellen's pedagogical tools and multi-provider support
+        </div>
+        
+        <div class="provider-select">
+            <label for="provider">Select AI Provider: </label>
+            <select id="provider">
+                <option value="openai">OpenAI (GPT-4o-mini)</option>
+                <option value="anthropic">Anthropic (Claude 3 Haiku)</option>
+                <option value="google">Google (Gemini 1.5 Flash)</option>
+            </select>
+            
+            <label style="margin-left: 20px;">
+                <input type="checkbox" id="streaming" checked> Enable Streaming
+            </label>
+        </div>
+
+        <div class="messages" id="messages"></div>
+        
+        <div class="input-group">
+            <input type="text" id="input" placeholder="Ask about communication, workplace skills, or test Ellen's Socratic method..." />
+            <button id="send">Send</button>
+        </div>
+        
+        <div id="status" class="status" style="display:none;"></div>
+    </div>
+
+    <script>
+        const chatHistory = [];
+        let isTyping = false;
+
+        function addMessage(role, content) {
+            const messagesEl = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}-message`;
+            messageDiv.textContent = content;
+            messagesEl.appendChild(messageDiv);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+            return messageDiv;
+        }
+
+        function updateStatus(message, type = '') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.style.display = 'block';
+            if (type === 'success') {
+                setTimeout(() => statusEl.style.display = 'none', 3000);
+            }
+        }
+
+        function showTypingIndicator() {
+            const messagesEl = document.getElementById('messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant-message typing';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = '<span class="typing">Ellen is thinking...</span>';
+            messagesEl.appendChild(typingDiv);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingDiv = document.getElementById('typing-indicator');
+            if (typingDiv) {
+                typingDiv.remove();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('input');
+            const button = document.getElementById('send');
+            const message = input.value.trim();
+            
+            if (!message || isTyping) return;
+            
+            isTyping = true;
+            button.disabled = true;
+            addMessage('user', message);
+            chatHistory.push({ role: 'user', content: message });
+            input.value = '';
+            
+            const provider = document.getElementById('provider').value;
+            const streaming = document.getElementById('streaming').checked;
+            
+            updateStatus(`Sending to ${provider}...`);
+            showTypingIndicator();
+            
+            try {
+                const response = await fetch('/api/test-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: chatHistory.slice(-6), // Last 6 messages for context
+                        provider,
+                        stream: streaming
+                    })
+                });
+                
+                removeTypingIndicator();
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'API error');
+                }
+                
+                if (streaming) {
+                    // Handle streaming response
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let assistantMessage = '';
+                    let messageDiv = null;
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n');
+                        
+                        for (const line of lines) {
+                            if (line.startsWith('0:')) {
+                                // This is a chunk of text
+                                const text = line.substring(2).replace(/\\n/g, '\n').replace(/\\"/g, '"');
+                                assistantMessage += text;
+                                
+                                if (!messageDiv) {
+                                    messageDiv = addMessage('assistant', assistantMessage);
+                                } else {
+                                    messageDiv.textContent = assistantMessage;
+                                }
+                                
+                                const messagesEl = document.getElementById('messages');
+                                messagesEl.scrollTop = messagesEl.scrollHeight;
+                            }
+                        }
+                    }
+                    
+                    chatHistory.push({ role: 'assistant', content: assistantMessage });
+                    updateStatus('Response complete!', 'success');
+                } else {
+                    // Handle non-streaming response
+                    const data = await response.json();
+                    addMessage('assistant', data.content);
+                    chatHistory.push({ role: 'assistant', content: data.content });
+                    updateStatus(`Response from ${data.provider} (${data.model})`, 'success');
+                }
+            } catch (error) {
+                removeTypingIndicator();
+                updateStatus(`Error: ${error.message}`, 'error');
+                addMessage('assistant', `Error: ${error.message}`);
+            } finally {
+                isTyping = false;
+                button.disabled = false;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('send').addEventListener('click', sendMessage);
+        document.getElementById('input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Focus input on load
+        document.getElementById('input').focus();
+        
+        // Example prompts
+        const examplePrompts = [
+            "I'm nervous about giving feedback to my manager",
+            "How do I practice active listening?",
+            "Test me on conflict resolution principles",
+            "I noticed I interrupt people when excited",
+            "What's the difference between empathy and sympathy?",
+            "Give me a scenario to practice assertiveness"
+        ];
+        
+        // Set a random example as placeholder
+        document.getElementById('input').placeholder = examplePrompts[Math.floor(Math.random() * examplePrompts.length)];
+    </script>
+</body>
+</html>

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mookti Chat API Test - Multi-Provider</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        select, input[type="checkbox"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .chat-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .chat-box {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .chat-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .user-message {
+            background: #e3f2fd;
+            margin-left: 20%;
+        }
+        .assistant-message {
+            background: #f3e5f5;
+            margin-right: 20%;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        .tool-call {
+            background: #e8f5e9;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .metric {
+            text-align: center;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+        .metric-label {
+            font-size: 11px;
+            color: #666;
+        }
+        .metric-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Mookti Multi-Provider Chat Test</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="provider">Provider</label>
+                <select id="provider">
+                    <option value="">Auto-select</option>
+                    <option value="anthropic">Anthropic (Claude)</option>
+                    <option value="openai">OpenAI (GPT)</option>
+                    <option value="google">Google (Gemini)</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="model">Model (optional)</label>
+                <select id="model">
+                    <option value="">Auto-select</option>
+                    <optgroup label="Anthropic">
+                        <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                        <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                        <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+                    </optgroup>
+                    <optgroup label="OpenAI">
+                        <option value="gpt-4o">GPT-4o</option>
+                        <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                        <option value="gpt-4o-mini">GPT-4o mini</option>
+                    </optgroup>
+                    <optgroup label="Google">
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                    </optgroup>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="useRAG" checked> Use RAG
+                </label>
+                <label>
+                    <input type="checkbox" id="streaming" checked> Streaming
+                </label>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-box">
+                <div class="chat-header">💬 Chat with Ellen (v2 - Vercel AI SDK)</div>
+                <div class="messages" id="messages-v2"></div>
+                <div class="input-group">
+                    <input type="text" id="input-v2" placeholder="Ask Ellen a question..." />
+                    <button id="send-v2">Send</button>
+                </div>
+                <div id="status-v2" class="status" style="display:none;"></div>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-label">Provider</div>
+                        <div class="metric-value" id="provider-v2">-</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Model</div>
+                        <div class="metric-value" id="model-v2">-</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Tokens</div>
+                        <div class="metric-value" id="tokens-v2">-</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Time</div>
+                        <div class="metric-value" id="time-v2">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-box">
+                <div class="chat-header">💬 Chat with Ellen (v1 - Original)</div>
+                <div class="messages" id="messages-v1"></div>
+                <div class="input-group">
+                    <input type="text" id="input-v1" placeholder="Ask Ellen a question..." />
+                    <button id="send-v1">Send</button>
+                </div>
+                <div id="status-v1" class="status" style="display:none;"></div>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-label">Provider</div>
+                        <div class="metric-value">Anthropic</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Model</div>
+                        <div class="metric-value" id="model-v1">-</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Tokens</div>
+                        <div class="metric-value" id="tokens-v1">-</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Time</div>
+                        <div class="metric-value" id="time-v1">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock auth token for testing
+        const authToken = 'test-token-' + Date.now();
+        
+        // Chat history
+        const chatHistoryV1 = [];
+        const chatHistoryV2 = [];
+
+        function addMessage(version, role, content, toolCalls = null) {
+            const messagesEl = document.getElementById(`messages-${version}`);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}-message`;
+            messageDiv.textContent = content;
+            messagesEl.appendChild(messageDiv);
+            
+            if (toolCalls && toolCalls.length > 0) {
+                toolCalls.forEach(call => {
+                    const toolDiv = document.createElement('div');
+                    toolDiv.className = 'tool-call';
+                    toolDiv.textContent = `🔧 Tool: ${call.tool || call.name} - ${JSON.stringify(call.input || call.args, null, 2)}`;
+                    messagesEl.appendChild(toolDiv);
+                });
+            }
+            
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        function updateStatus(version, message, type = '') {
+            const statusEl = document.getElementById(`status-${version}`);
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.style.display = 'block';
+            if (type === 'success') {
+                setTimeout(() => statusEl.style.display = 'none', 3000);
+            }
+        }
+
+        async function sendMessageV1() {
+            const input = document.getElementById('input-v1');
+            const button = document.getElementById('send-v1');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            button.disabled = true;
+            addMessage('v1', 'user', message);
+            chatHistoryV1.push({ role: 'user', content: message });
+            input.value = '';
+            
+            const startTime = Date.now();
+            updateStatus('v1', 'Sending to original API...');
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        message,
+                        chatHistory: chatHistoryV1.slice(-6),
+                        useRAG: document.getElementById('useRAG').checked
+                    })
+                });
+                
+                const data = await response.json();
+                const duration = Date.now() - startTime;
+                
+                if (response.ok) {
+                    addMessage('v1', 'assistant', data.content, data.toolCalls);
+                    chatHistoryV1.push({ role: 'assistant', content: data.content });
+                    
+                    document.getElementById('model-v1').textContent = data.model?.split('-').slice(-1)[0] || '-';
+                    document.getElementById('tokens-v1').textContent = (data.usage?.input_tokens + data.usage?.output_tokens) || '-';
+                    document.getElementById('time-v1').textContent = `${duration}ms`;
+                    
+                    updateStatus('v1', 'Response received!', 'success');
+                } else {
+                    throw new Error(data.error || 'API error');
+                }
+            } catch (error) {
+                updateStatus('v1', `Error: ${error.message}`, 'error');
+                addMessage('v1', 'assistant', `Error: ${error.message}`);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function sendMessageV2() {
+            const input = document.getElementById('input-v2');
+            const button = document.getElementById('send-v2');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            button.disabled = true;
+            addMessage('v2', 'user', message);
+            chatHistoryV2.push({ role: 'user', content: message });
+            input.value = '';
+            
+            const startTime = Date.now();
+            updateStatus('v2', 'Sending to new multi-provider API...');
+            
+            const provider = document.getElementById('provider').value;
+            const modelId = document.getElementById('model').value;
+            const streaming = document.getElementById('streaming').checked;
+            
+            try {
+                const response = await fetch('/api/chat-v2', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        message,
+                        chatHistory: chatHistoryV2.slice(-6),
+                        useRAG: document.getElementById('useRAG').checked,
+                        provider: provider || undefined,
+                        modelId: modelId || undefined,
+                        stream: streaming
+                    })
+                });
+                
+                if (streaming && response.ok) {
+                    // Handle streaming response
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let assistantMessage = '';
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        const chunk = decoder.decode(value);
+                        // Parse SSE chunks (simplified)
+                        const lines = chunk.split('\n');
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.slice(6));
+                                    if (data.text) {
+                                        assistantMessage += data.text;
+                                        // Update the last message
+                                        const messages = document.getElementById('messages-v2');
+                                        const lastMessage = messages.lastElementChild;
+                                        if (lastMessage && lastMessage.classList.contains('assistant-message')) {
+                                            lastMessage.textContent = assistantMessage;
+                                        } else {
+                                            addMessage('v2', 'assistant', assistantMessage);
+                                        }
+                                    }
+                                } catch (e) {
+                                    // Ignore parse errors
+                                }
+                            }
+                        }
+                    }
+                    
+                    const duration = Date.now() - startTime;
+                    chatHistoryV2.push({ role: 'assistant', content: assistantMessage });
+                    document.getElementById('time-v2').textContent = `${duration}ms`;
+                    updateStatus('v2', 'Stream complete!', 'success');
+                } else {
+                    // Handle non-streaming response
+                    const data = await response.json();
+                    const duration = Date.now() - startTime;
+                    
+                    if (response.ok) {
+                        addMessage('v2', 'assistant', data.content, data.toolCalls);
+                        chatHistoryV2.push({ role: 'assistant', content: data.content });
+                        
+                        document.getElementById('provider-v2').textContent = data.provider || '-';
+                        document.getElementById('model-v2').textContent = data.model?.split('-').pop() || '-';
+                        document.getElementById('tokens-v2').textContent = (data.usage?.input_tokens + data.usage?.output_tokens) || '-';
+                        document.getElementById('time-v2').textContent = `${duration}ms`;
+                        
+                        updateStatus('v2', 'Response received!', 'success');
+                    } else {
+                        throw new Error(data.error || 'API error');
+                    }
+                }
+            } catch (error) {
+                updateStatus('v2', `Error: ${error.message}`, 'error');
+                addMessage('v2', 'assistant', `Error: ${error.message}`);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('send-v1').addEventListener('click', sendMessageV1);
+        document.getElementById('send-v2').addEventListener('click', sendMessageV2);
+        
+        document.getElementById('input-v1').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessageV1();
+        });
+        
+        document.getElementById('input-v2').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessageV2();
+        });
+        
+        // Sync inputs for easier testing
+        document.getElementById('input-v1').addEventListener('input', (e) => {
+            document.getElementById('input-v2').value = e.target.value;
+        });
+        document.getElementById('input-v2').addEventListener('input', (e) => {
+            document.getElementById('input-v1').value = e.target.value;
+        });
+    </script>
+</body>
+</html>

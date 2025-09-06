@@ -1,0 +1,288 @@
+{
+  "formative_only": true,
+  "blocked_fields": [
+    "grade",
+    "grades",
+    "score",
+    "scores",
+    "pass_fail"
+  ],
+  "tools": [
+    {
+      "name": "socratic_tool",
+      "category": "pedagogical",
+      "description": "Socratic questioning and guided discovery through elenchus and aporia",
+      "research_basis": [
+        "D'Mello & Graesser (2012) - Productive confusion enhances learning",
+        "Chi & Wylie (2014) - ICAP Framework for active engagement",
+        "VanLehn (2011) - Optimal assistance dilemma"
+      ],
+      "key_features": [
+        "Answer-first approach for specific questions",
+        "Maximum 2 questions to prevent cognitive overload",
+        "Productive confusion (aporia) not frustration",
+        "Never harsh or judgmental"
+      ],
+      "default_model_tier": "S",
+      "escalate_if": {
+        "condition": "complex_reasoning",
+        "to_tier": "M"
+      },
+      "namespace": "public-core"
+    },
+    {
+      "name": "reflection_tool",
+      "category": "pedagogical",
+      "description": "Metacognitive reflection and self-regulated learning",
+      "research_basis": [
+        "Zimmerman (2002) - Self-regulated learning cycle",
+        "Schraw & Dennison (1994) - Metacognitive awareness",
+        "Dunlosky et al. (2013) - Self-explanation utility"
+      ],
+      "key_features": [
+        "Three-phase reflection: Forethought, Performance, Self-reflection",
+        "Calibration accuracy assessment",
+        "Emotional awareness integration",
+        "Process-focused not outcome-focused"
+      ],
+      "default_model_tier": "S",
+      "namespace": "public-core"
+    },
+    {
+      "name": "extension_tool",
+      "category": "pedagogical",
+      "description": "Connect learning to broader contexts and applications",
+      "research_basis": [
+        "Bransford & Schwartz (1999) - Preparation for Future Learning",
+        "Gentner (2003) - Analogical reasoning and structural mapping",
+        "Anderson & Krathwohl (2001) - Bloom's Taxonomy Revised"
+      ],
+      "key_features": [
+        "Cross-domain connections",
+        "Real-world applications",
+        "Progressive complexity (Apply → Analyze → Evaluate → Create)",
+        "Structural mapping for knowledge transfer"
+      ],
+      "default_model_tier": "S",
+      "namespace": "public-core"
+    },
+    {
+      "name": "genealogy_tool",
+      "category": "pedagogical",
+      "description": "Trace conceptual evolution and historical development",
+      "research_basis": [
+        "Kuhn (1962) - Paradigm shifts in understanding",
+        "Chi (2009) - Conceptual change theory",
+        "Novak & Cañas (2008) - Concept mapping with hierarchies",
+        "Vygotsky (1978) - Historical-cultural approach"
+      ],
+      "key_features": [
+        "Historical context reveals misconception patterns",
+        "Paradigm shift identification",
+        "Cross-disciplinary influences",
+        "Origins → Evolution → Controversies → Modern form → Future"
+      ],
+      "default_model_tier": "S",
+      "namespace": "public-core"
+    },
+    {
+      "name": "writing_coach",
+      "category": "coaching",
+      "description": "Academic writing improvement with evidence-based feedback",
+      "research_basis": [
+        "Graham & Perin (2007) - Strategy instruction meta-analysis",
+        "Flower & Hayes (1981) - Cognitive process theory",
+        "Bean (2011) - Writing-to-learn vs writing-to-communicate"
+      ],
+      "key_features": [
+        "Strengths-first feedback approach",
+        "2-3 focused improvements per session",
+        "Concrete examples and models",
+        "Preserves student ownership"
+      ],
+      "default_model_tier": "S",
+      "escalate_if": {
+        "condition": "long_document",
+        "to_tier": "M"
+      },
+      "namespace": "public-writing"
+    },
+    {
+      "name": "note_assistant",
+      "category": "coaching",
+      "description": "Evidence-based note-taking strategies",
+      "research_basis": [
+        "Mueller & Oppenheimer (2014) - Handwriting vs typing benefits",
+        "Kiewra (1989) - Note-taking methods comparison",
+        "Dunlosky et al. (2013) - Elaborative interrogation"
+      ],
+      "key_features": [
+        "Cornell, mind map, outline, flow, charting methods",
+        "Generative processing over verbatim copying",
+        "Spaced review schedule",
+        "Active recall integration"
+      ],
+      "default_model_tier": "S",
+      "namespace": "public-coaching"
+    },
+    {
+      "name": "office_hours_coach",
+      "category": "coaching",
+      "description": "Prepare for productive professor meetings",
+      "research_basis": [
+        "Guerrero & Rod (2013) - Student-faculty interaction",
+        "Chickering & Gamson (1987) - Seven principles"
+      ],
+      "key_features": [
+        "Specific question formulation",
+        "Materials preparation checklist",
+        "Professional interaction guidelines",
+        "Question templates by goal type"
+      ],
+      "default_model_tier": "S",
+      "namespace": "public-coaching"
+    },
+    {
+      "name": "email_coach",
+      "category": "coaching",
+      "description": "Professional academic email composition",
+      "research_basis": [
+        "Bjork et al. (2021) - Academic email effectiveness",
+        "Brown & Levinson (1987) - Politeness theory"
+      ],
+      "key_features": [
+        "Clear subject line formulation",
+        "Purpose-first structure",
+        "Professional tone calibration",
+        "Under 200 words target"
+      ],
+      "default_model_tier": "S",
+      "namespace": "public-writing"
+    },
+    {
+      "name": "plan_manager",
+      "category": "planning",
+      "description": "Learning plan creation and management",
+      "default_model_tier": "S",
+      "features": [
+        "spaced_practice",
+        "expanding_intervals",
+        "interleaving",
+        "woop_mental_contrasting",
+        "growth_compass_integration"
+      ],
+      "namespace": "public-growth"
+    },
+    {
+      "name": "focus_session",
+      "category": "planning",
+      "description": "Focus session management and tracking",
+      "default_model_tier": "S",
+      "features": [
+        "pomodoro_variants",
+        "session_goals",
+        "quick_reflection",
+        "growth_compass_tracking"
+      ],
+      "namespace": "public-growth"
+    },
+    {
+      "name": "retrieval_aggregator",
+      "category": "infrastructure",
+      "description": "Multi-namespace content retrieval and ranking",
+      "default_model_tier": "S",
+      "supports_rrf": true
+    },
+    {
+      "name": "citation_formatter",
+      "category": "infrastructure",
+      "description": "Format and manage citations",
+      "default_model_tier": "S"
+    },
+    {
+      "name": "context_rewriter",
+      "category": "infrastructure",
+      "description": "Rewrite queries with context",
+      "default_model_tier": "S"
+    },
+    {
+      "name": "growth_compass_tracker",
+      "category": "growth",
+      "description": "Track and calculate Growth Velocity metrics",
+      "default_model_tier": "S",
+      "namespace": "public-growth",
+      "components": [
+        "goal_alignment",
+        "balance_index",
+        "depth_score",
+        "recovery_engagement",
+        "reflection_quality"
+      ]
+    },
+    {
+      "name": "power_patterns",
+      "category": "growth",
+      "description": "Discover and track learning patterns",
+      "default_model_tier": "S",
+      "namespace": "public-growth"
+    },
+    {
+      "name": "season_planner",
+      "category": "growth",
+      "description": "Manage learning seasons and weights",
+      "default_model_tier": "S",
+      "namespace": "public-growth"
+    }
+  ],
+  "routing_loops": {
+    "default": [
+      "context_rewriter",
+      "retrieval_aggregator",
+      "socratic_tool",
+      "reflection_tool",
+      "plan_manager"
+    ],
+    "coaching": [
+      "context_rewriter",
+      "retrieval_aggregator",
+      "writing_coach|note_assistant|email_coach",
+      "reflection_tool"
+    ],
+    "growth_tracking": [
+      "growth_compass_tracker",
+      "power_patterns",
+      "plan_manager",
+      "reflection_tool"
+    ],
+    "focus_session": [
+      "focus_session",
+      "socratic_tool",
+      "reflection_tool",
+      "growth_compass_tracker"
+    ]
+  },
+  "namespace_routing": {
+    "remedial": "public-remedial",
+    "core": "public-core",
+    "coaching": "public-coaching",
+    "writing": "public-writing",
+    "growth": "public-growth"
+  },
+  "escalation_rules": {
+    "complex_math": {
+      "from": "S",
+      "to": "M",
+      "conditions": ["mathematics", "calculus", "statistics"]
+    },
+    "long_context": {
+      "from": "S",
+      "to": "M",
+      "conditions": ["context_length > 4000", "prior_turns > 5"]
+    },
+    "complex_reasoning": {
+      "from": "S",
+      "to": "F",
+      "conditions": ["multi_step_proof", "advanced_logic"]
+    }
+  }
+}

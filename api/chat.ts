@@ -1,3 +1,7 @@
+// ⚠️ DEPRECATED: This file has been replaced by chat-v2.ts
+// chat-v2.ts supports multiple AI providers (Anthropic, OpenAI, Google)
+// This file is kept for reference only and should not be used for new development
+//
 // Combined Chat Edge Function
 // Performs vector search for context, then calls Claude API
 
