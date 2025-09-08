@@ -26,7 +26,7 @@ export const entitlementConfigs: Record<EntitlementTier, EntitlementConfig> = {
   free: {
     tier: 'free',
     allowedProviders: ['anthropic'], // Limited to one provider
-    allowedModelTiers: ['S'],
+    allowedModelTiers: [1 as ModelConfig['tier']],
     maxRequestsPerDay: 50,
     maxTokensPerRequest: 2000,
     maxTokensPerMonth: 50000,
@@ -41,7 +41,7 @@ export const entitlementConfigs: Record<EntitlementTier, EntitlementConfig> = {
   basic: {
     tier: 'basic',
     allowedProviders: ['anthropic', 'openai'],
-    allowedModelTiers: ['S', 'M'],
+    allowedModelTiers: [1 as ModelConfig['tier'], 2 as ModelConfig['tier']],
     maxRequestsPerDay: 500,
     maxTokensPerRequest: 4000,
     maxTokensPerMonth: 500000,
@@ -56,7 +56,7 @@ export const entitlementConfigs: Record<EntitlementTier, EntitlementConfig> = {
   pro: {
     tier: 'pro',
     allowedProviders: ['anthropic', 'openai', 'google'],
-    allowedModelTiers: ['S', 'M', 'F'],
+    allowedModelTiers: [1 as ModelConfig['tier'], 2 as ModelConfig['tier'], 3 as ModelConfig['tier']],
     maxRequestsPerDay: 2000,
     maxTokensPerRequest: 8000,
     maxTokensPerMonth: 2000000,
@@ -71,7 +71,7 @@ export const entitlementConfigs: Record<EntitlementTier, EntitlementConfig> = {
   enterprise: {
     tier: 'enterprise',
     allowedProviders: ['anthropic', 'openai', 'google'],
-    allowedModelTiers: ['S', 'M', 'F'],
+    allowedModelTiers: [1 as ModelConfig['tier'], 2 as ModelConfig['tier'], 3 as ModelConfig['tier'], 4 as ModelConfig['tier']],
     maxRequestsPerDay: 10000,
     maxTokensPerRequest: 32000,
     maxTokensPerMonth: 10000000,

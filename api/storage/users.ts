@@ -1,5 +1,5 @@
 import '../../lib/polyfills';
-import storageService from '../../lib/storage/storage-service';
+import databaseStorage from '../../src/lib/db/storage-service';
 
 export const config = {
   runtime: 'edge',
@@ -27,27 +27,33 @@ export default async function handler(request: Request): Promise<Response> {
       const email = url.searchParams.get('email');
       
       if (email) {
-        const user = await storageService.getUserByEmail(email);
+        const user = await databaseStorage.getUserByEmail(email);
         if (!user) {
           return new Response(JSON.stringify({ error: 'User not found' }), {
             status: 404,
             headers: { 'Content-Type': 'application/json' }
           });
         }
-        return new Response(JSON.stringify(user), {
+        return new Response(JSON.stringify({
+          id: user.id,
+          email: user.email
+        }), {
           headers: { 'Content-Type': 'application/json' }
         });
       }
       
       if (userId) {
-        const user = await storageService.getUser(userId);
+        const user = await databaseStorage.getUserById(userId);
         if (!user) {
           return new Response(JSON.stringify({ error: 'User not found' }), {
             status: 404,
             headers: { 'Content-Type': 'application/json' }
           });
         }
-        return new Response(JSON.stringify(user), {
+        return new Response(JSON.stringify({
+          id: user.id,
+          email: user.email
+        }), {
           headers: { 'Content-Type': 'application/json' }
         });
       }
@@ -59,70 +65,38 @@ export default async function handler(request: Request): Promise<Response> {
     }
     
     if (method === 'POST') {
-      const body: any = await request.json();
+      const body: any = await request.json() as { userId?: string; [key: string]: any };
       
       // Check if user already exists
       if (body.email) {
-        const existingUser = await storageService.getUserByEmail(body.email);
+        const existingUser = await databaseStorage.getUserByEmail(body.email);
         if (existingUser) {
           // Return existing user instead of error for idempotency
-          return new Response(JSON.stringify(existingUser), {
+          return new Response(JSON.stringify({
+            id: existingUser.id,
+            email: existingUser.email
+          }), {
             headers: { 'Content-Type': 'application/json' }
           });
         }
       }
       
-      // Create new user
-      const user = await storageService.createUser({
-        email: body.email,
-        name: body.name || '',
-        type: body.type || 'free',
-        preferences: body.preferences || {},
-        selectedModel: body.selectedModel,
-        selectedProvider: body.selectedProvider,
-      });
+      // Create new user (with optional ID in dev mode)
+      const user = await databaseStorage.createUser(
+        body.email, 
+        body.password,
+        body.id // Will only be used in development mode
+      );
       
-      // Create session if requested
-      if (body.createSession) {
-        const sessionToken = crypto.randomUUID();
-        await storageService.createSession(user.id, sessionToken);
-        
-        return new Response(JSON.stringify({
-          user,
-          session: { token: sessionToken }
-        }), {
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-      
-      return new Response(JSON.stringify(user), {
+      return new Response(JSON.stringify({
+        id: user.id,
+        email: user.email
+      }), {
         headers: { 'Content-Type': 'application/json' }
       });
     }
     
-    if (method === 'PUT') {
-      const body: any = await request.json();
-      const { userId, ...updates } = body;
-      
-      if (!userId) {
-        return new Response(JSON.stringify({ error: 'userId required' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-      
-      const updatedUser = await storageService.updateUser(userId, updates);
-      if (!updatedUser) {
-        return new Response(JSON.stringify({ error: 'User not found' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-      
-      return new Response(JSON.stringify(updatedUser), {
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    // PUT method removed for now - can be added later if needed
     
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,

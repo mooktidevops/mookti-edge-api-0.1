@@ -17,22 +17,32 @@
     "test-api": "ts-node scripts/testAPI.ts",
     "test-sessions": "TS_NODE_PROJECT=tsconfig.scripts.json ts-node scripts/test-ellen-sessions.ts",
     "test": "jest",
-    "lint": "eslint . --ext .ts,.tsx"
+    "lint": "eslint . --ext .ts,.tsx",
+    "init-admin": "TS_NODE_PROJECT=tsconfig.scripts.json ts-node scripts/init-super-admin.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.8",
     "@ai-sdk/google": "^2.0.11",
     "@ai-sdk/openai": "^2.0.22",
     "@anthropic-ai/sdk": "^0.20.1",
+    "@neondatabase/serverless": "^1.0.1",
     "@pinecone-database/pinecone": "^2.0.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@vercel/kv": "^1.0.1",
-    "ai": "^5.0.26",
+    "ai": "^5.0.34",
     "ajv": "^8.12.0",
+    "bcrypt-ts": "^7.1.0",
+    "bcryptjs": "^3.0.2",
     "dotenv": "^16.4.1",
-    "jose": "^6.0.12",
+    "drizzle-kit": "^0.31.4",
+    "drizzle-orm": "^0.44.5",
+    "jose": "^6.1.0",
     "next": "^15.5.2",
+    "node-fetch": "^3.3.2",
+    "uuid": "^12.0.0",
     "voyageai": "^0.0.5",
-    "zod": "^4.1.3"
+    "zod": "^4.1.5"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",

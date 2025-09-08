@@ -40,15 +40,13 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   try {
-    const body: ChatRequest = await req.json();
+    const body = await req.json() as ChatRequest;
     const { message, provider = 'anthropic', modelId, stream = false, chatHistory = [] } = body;
 
     // Route to appropriate model
     const { model } = await routeToModel({
       provider,
-      modelId,
-      task: 'chat',
-      userId: 'test-user',
+      modelId
     });
 
     // Build messages
@@ -64,11 +62,11 @@ export default async function handler(req: Request): Promise<Response> {
       const result = await streamText({
         model,
         messages,
-        maxTokens: 1000,
+        maxRetries: 1000,
       });
 
       // Return streaming response
-      return new Response(result.toAIStream(), {
+      return new Response(result.toTextStreamResponse().body, {
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
@@ -79,7 +77,7 @@ export default async function handler(req: Request): Promise<Response> {
       const result = await generateText({
         model,
         messages,
-        maxTokens: 1000,
+        maxRetries: 1000,
       });
 
       return new Response(result.text, {

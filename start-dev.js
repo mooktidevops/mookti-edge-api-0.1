@@ -92,8 +92,11 @@ const server = http.createServer(async (req, res) => {
     let handler;
     let modulePath;
     
-    // Check for dynamic Ellen session routes
-    if (pathname.startsWith('/api/ellen/sessions/') && pathname !== '/api/ellen/sessions/complete') {
+    // Check for dynamic routes
+    if (pathname.startsWith('/api/storage/chats/')) {
+      // This is a dynamic chat ID route
+      modulePath = path.join(__dirname, 'api', 'storage', 'chats.ts');
+    } else if (pathname.startsWith('/api/ellen/sessions/') && pathname !== '/api/ellen/sessions/complete') {
       // This is a dynamic session ID route
       modulePath = path.join(__dirname, 'api', 'ellen', 'sessions.ts');
     } else {

@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.json() as { userId?: string; [key: string]: any };
     const { userId, ...sessionData } = body;
     
     if (!userId) {
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Add the session
-    const session = await growthCompassStorage.addSession(userId, sessionData);
+    const session = await growthCompassStorage.addSession(userId, sessionData as any);
     
     // Recalculate Growth Velocity after adding session
     const data = await growthCompassStorage.getGrowthCompassData(userId);

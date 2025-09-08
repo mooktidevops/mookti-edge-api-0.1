@@ -2,6 +2,7 @@
 
 // Ellen Sessions API
 export interface CreateSessionRequest {
+  id?: string;  // Optional custom session ID
   userId: string;
   type?: 'study' | 'practice' | 'revision' | 'exploration';
   title?: string;

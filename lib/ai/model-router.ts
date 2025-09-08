@@ -1,6 +1,16 @@
+/**
+ * @deprecated This file is deprecated. Use src/services/model-selection.ts instead.
+ * The new implementation uses the 4-tier system (1/2/3/4) defined in src/config/model-tiers.ts
+ * This file is kept for backwards compatibility but should not be used for new code.
+ */
+
 import { LanguageModel } from 'ai';
 import { providers, AIProvider, getAvailableProviders, getDefaultProvider } from './providers';
-import { ModelConfig, ModelSelectionRequest, getModelById, getDefaultModelForProvider, availableModels } from './models';
+import { ModelConfig, getModelById, getDefaultModelForProvider, availableModels } from './models';
+import type { ModelSelectionRequest } from './models';
+
+// Re-export for convenience
+export type { ModelSelectionRequest };
 
 // Model routing result
 export interface ModelRoutingResult {
@@ -82,10 +92,11 @@ export function routeToModel(request: ModelSelectionRequest = {}): ModelRoutingR
     candidateModels = [defaultModel];
   }
 
-  // Choose the model (prefer by tier: M > F > S for general use)
+  // Choose the model (prefer by tier: 2 > 3 > 1 for general use)
   const selectedModel = 
-    candidateModels.find(m => m.tier === 'M') ||
-    candidateModels.find(m => m.tier === 'F') ||
+    candidateModels.find(m => m.tier === 2) ||
+    candidateModels.find(m => m.tier === 3) ||
+    candidateModels.find(m => m.tier === 1) ||
     candidateModels[0];
 
   return {
@@ -114,15 +125,15 @@ function getLanguageModel(provider: AIProvider, modelId: string): LanguageModel 
 
 // Export convenience functions for common use cases
 export function getReasoningModel(provider?: AIProvider): ModelRoutingResult {
-  return routeToModel({ provider, tier: 'F' });
+  return routeToModel({ provider, tier: 3 as ModelConfig['tier'] });
 }
 
 export function getFastModel(provider?: AIProvider): ModelRoutingResult {
-  return routeToModel({ provider, tier: 'M' });
+  return routeToModel({ provider, tier: 2 as ModelConfig['tier'] });
 }
 
 export function getBudgetModel(provider?: AIProvider): ModelRoutingResult {
-  return routeToModel({ provider, tier: 'S' });
+  return routeToModel({ provider, tier: 1 as ModelConfig['tier'] });
 }
 
 export function getVisionModel(provider?: AIProvider): ModelRoutingResult {

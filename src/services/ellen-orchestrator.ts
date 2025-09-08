@@ -9,6 +9,12 @@ import {
   SessionGoal 
 } from '../../lib/storage/ellen-session-types';
 import { growthCompassIntegration, SessionMetrics } from './growth-compass/ellen-integration';
+import { ellenTools, ELLEN_TOOLS } from './ellen-tools';
+import { getToolConfig, toolNeedsRetrieval, getToolContextStrategy } from '../config/tool-config';
+import { ContextManager } from './context-manager';
+import { modelSelection } from './model-selection';
+import { queryOptimizer } from './query-optimizer';
+import { topicRegistry } from './topic-interest-registry';
 
 export interface EllenRequest {
   message: string;
@@ -23,6 +29,7 @@ export interface EllenRequest {
   };
   queryType?: string;
   toolOverride?: string;
+  modelPreference?: string; // 'auto' or specific model ID
 }
 
 export interface EllenResponse {
@@ -37,21 +44,15 @@ export interface EllenResponse {
   sessionId?: string;
 }
 
-export interface ModelTier {
-  tier: 'S' | 'M' | 'F';
-  model: string;
-}
-
-const MODEL_TIERS: Record<string, ModelTier> = {
-  S: { tier: 'S', model: 'gpt-4o-mini' },
-  M: { tier: 'M', model: 'gpt-4o' },
-  F: { tier: 'F', model: 'claude-3-opus-20240229' }
-};
+// Model tier configuration moved to ../config/model-tiers.ts
+// Using new 1/2/3/4 tier system
 
 export class EllenOrchestrator {
   private pinecone: Pinecone;
   private toolRegistry = toolRegistry;
   private sessionStorage: EllenSessionStorage;
+  private contextManager: ContextManager;
+  private queryOptimizationHints: any = {};
 
   constructor() {
     this.pinecone = new Pinecone({
@@ -59,9 +60,28 @@ export class EllenOrchestrator {
     });
 
     this.sessionStorage = new EllenSessionStorage();
+    this.contextManager = new ContextManager();
   }
 
   async processRequest(request: EllenRequest): Promise<EllenResponse> {
+    const startTime = Date.now();
+    
+    // Store current request for tool selection
+    this.currentRequest = request;
+    
+    // Step 0: Check cache and optimization opportunities
+    const optimization = queryOptimizer.analyzeQuery(request);
+    console.log(`[Optimizer] ${optimization.reasoning}`);
+    
+    // Return cached result if available
+    if (optimization.useCache) {
+      const cached = queryOptimizer.getCachedResult(request);
+      if (cached) {
+        console.log(`[Cache] Returning cached response (saved ${Date.now() - startTime}ms)`);
+        return cached;
+      }
+    }
+    
     // Handle session management
     let sessionId = request.context?.sessionId;
     let session = null;
@@ -87,57 +107,107 @@ export class EllenOrchestrator {
       });
       sessionId = session.id;
     }
-    // Step 1: Detect query type if not provided
-    const queryType = request.queryType || await this.detectQueryType(request);
     
-    // Step 2: Select routing loop based on query type
-    const routingLoop = this.selectRoutingLoop(queryType, request.toolOverride);
+    // Reset optimization hints for new request
+    this.queryOptimizationHints = {};
     
-    // Step 3: Rewrite query with context
-    const rewrittenQuery = await this.rewriteQuery(request);
+    // Step 1: Parallel sentiment analysis and query type detection
+    const [sentiment, queryType] = await Promise.all([
+      optimization.parallelizable.includes('sentiment_analysis') 
+        ? this.analyzeSentimentIfNeeded(request)
+        : Promise.resolve(null),
+      request.queryType || this.detectQueryType(request)
+    ]);
     
-    // Step 4: Retrieve relevant content from namespaces
-    const retrievalResults = await this.retrieveContent(rewrittenQuery, queryType);
+    // If high frustration detected, route to meta-tools first
+    if (sentiment && sentiment.frustrationLevel >= 6) {
+      return await this.handleFrustration(request, sentiment, sessionId);
+    }
     
-    // Step 5: Determine model tier based on complexity
-    const modelTier = this.determineModelTier(request, queryType);
-    
-    // Step 6: Execute tools in routing loop
-    const toolResults = await this.executeRoutingLoop(
-      routingLoop,
-      request,
-      retrievalResults,
-      modelTier
+    // Step 2: Select routing loop based on query type (consider sentiment and optimizations)
+    const routingLoop = await this.selectRoutingLoop(
+      queryType, 
+      request.toolOverride || sentiment?.suggestedTool,
+      optimization
     );
     
-    // Step 7: Format response with citations
+    // Get actual tools (not preprocessing steps)
+    const selectedTools = routingLoop.filter(t => 
+      t !== 'context_rewriter' && t !== 'retrieval_aggregator'
+    );
+    const primaryTool = selectedTools[0] || 'socratic_tool'; // First tool is primary
+    
+    // Get tool configuration
+    const toolConfig = getToolConfig(primaryTool);
+    
+    // Step 3: Get appropriate context based on tool needs
+    const context = await this.contextManager.getContext(
+      toolConfig.contextStrategy,
+      sessionId
+    );
+    
+    // Step 4: Conditionally rewrite query (ONLY if in routing loop)
+    let rewrittenQuery = request.message;
+    if (routingLoop.includes('context_rewriter')) {
+      rewrittenQuery = await this.rewriteQuery(request);
+      console.log(`[Context] Query rewritten (${Date.now() - startTime}ms)`);
+    } else {
+      console.log(`[Context] Skipped rewrite (saved ~800ms)`);
+    }
+    
+    // Step 5: Conditionally retrieve content (ONLY if in routing loop)
+    let retrievalResults = [];
+    if (routingLoop.includes('retrieval_aggregator')) {
+      retrievalResults = await this.retrieveContent(rewrittenQuery, queryType);
+      console.log(`[Retrieval] Content retrieved (${Date.now() - startTime}ms)`);
+    } else {
+      console.log(`[Retrieval] Skipped retrieval (saved ~1200ms)`);
+    }
+    
+    // Step 6: Use tool-specific model tier (based on primary tool)
+    const modelRouting = this.getOptimalModel(primaryTool, request);
+    console.log(`[Model] Selected model: ${(modelRouting.model as any)?.modelId || modelRouting.modelId || 'unknown'} for tool: ${primaryTool}`);
+    
+    // Step 7: Execute ONLY the tools in the routing loop (no duplicates)
+    // Filter out preprocessing tools since we already handled them
+    const toolsToExecute = routingLoop.filter(t => 
+      t !== 'context_rewriter' && t !== 'retrieval_aggregator'
+    );
+    
+    const toolResults = await this.executeRoutingLoop(
+      toolsToExecute,
+      request,
+      retrievalResults,
+      modelRouting
+    );
+    
+    // Step 8: Format response with citations
     const response = this.formatResponse(toolResults, retrievalResults);
     
-    // Step 8: Save messages to session if applicable
+    // Add actual tools used to response (including preprocessing steps)
+    response.toolsUsed = routingLoop;
+    
+    // Step 9: Save messages to session if applicable
     if (sessionId) {
       // Save user message
       await this.sessionStorage.addMessage({
         sessionId,
-        message: {
-          role: 'user',
-          content: request.message,
-          metadata: {
-            processType: this.inferProcessType(request, queryType)
-          }
+        role: 'user',
+        content: request.message,
+        metadata: {
+          processType: this.inferProcessType(request, queryType)
         }
       });
 
       // Save assistant response
       await this.sessionStorage.addMessage({
         sessionId,
-        message: {
-          role: 'assistant',
-          content: response.response,
-          metadata: {
-            toolsUsed: response.toolsUsed,
-            citations: response.citations,
-            retrievalNamespaces: this.selectNamespaces(queryType)
-          }
+        role: 'assistant',
+        content: response.response,
+        metadata: {
+          toolsUsed: selectedTools, // Use all selected tools
+          citations: response.citations,
+          retrievalNamespaces: this.selectNamespaces(queryType)
         }
       });
 
@@ -155,23 +225,40 @@ export class EllenOrchestrator {
       response.sessionId = sessionId;
     }
     
+    // Cache successful responses for simple queries
+    if (!sentiment || sentiment.frustrationLevel < 3) {
+      queryOptimizer.cacheResult(request, response);
+    }
+    
+    // Log performance metrics
+    const totalTime = Date.now() - startTime;
+    console.log(`[Performance] Total response time: ${totalTime}ms`);
+    if (totalTime < 2000) {
+      console.log(`[Performance] ✅ Target latency achieved!`);
+    } else {
+      console.log(`[Performance] ⚠️ Latency above target (2000ms)`);
+    }
+    
     return response;
   }
 
   private async detectQueryType(request: EllenRequest): Promise<string> {
-    const systemPrompt = `You are a query type classifier for an educational AI assistant.
-    Classify the user's message into one of these categories:
-    - learning: General learning or study questions
-    - coaching: Writing help, note-taking, email assistance, office hours prep
-    - planning: Creating study plans, scheduling, time management
-    - reflection: Self-assessment, progress review, metacognition
-    - growth: Tracking progress, patterns, Growth Compass features
+    const systemPrompt = `You are a query classifier for an educational AI assistant.
+    Analyze the user's message and return a JSON object with:
+    1. category: One of [learning, coaching, planning, reflection, growth]
+    2. needs_retrieval: true if the query needs external knowledge/content, false for simple facts, calculations, or meta-conversation
     
-    Return only the category name.`;
+    Examples:
+    - "What is 2+2?" → {"category": "learning", "needs_retrieval": false}
+    - "What is photosynthesis?" → {"category": "learning", "needs_retrieval": true}
+    - "Thanks" → {"category": "reflection", "needs_retrieval": false}
+    - "Explain quantum mechanics" → {"category": "learning", "needs_retrieval": true}
+    
+    Return ONLY valid JSON.`;
 
-    const { model } = routeToModel({ 
-      provider: 'openai',
-      tier: 'S' as const // Small tier for query type detection
+    // Use Tier 1 (Simple/Fast) for query classification
+    const { model } = modelSelection.selectModel({
+      requiresReasoning: false
     });
 
     const { text } = await generateText({
@@ -181,24 +268,257 @@ export class EllenOrchestrator {
       temperature: 0.1
     });
 
-    return text?.toLowerCase() || 'learning';
-  }
-
-  private selectRoutingLoop(queryType: string, toolOverride?: string): string[] {
-    if (toolOverride && this.toolRegistry.tools.find(t => t.name === toolOverride)) {
-      return ['context_rewriter', 'retrieval_aggregator', toolOverride];
+    try {
+      // Strip markdown code blocks if present
+      let cleanText = text || '{}';
+      if (cleanText.includes('```json')) {
+        cleanText = cleanText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      }
+      cleanText = cleanText.trim();
+      
+      const result = JSON.parse(cleanText);
+      console.log(`[QueryClassification] Model returned:`, result);
+      
+      // Store the retrieval decision for use by query optimizer
+      if (result.needs_retrieval === false) {
+        console.log(`[QueryClassification] Marking retrieval as skippable`);
+        this.queryOptimizationHints = { 
+          ...this.queryOptimizationHints, 
+          skipRetrieval: true 
+        };
+      }
+      return result.category?.toLowerCase() || 'learning';
+    } catch (e) {
+      console.log(`[QueryClassification] Failed to parse JSON:`, text?.substring(0, 100));
+      return 'learning';
     }
-
-    const loopMap: Record<string, string[]> = {
-      learning: this.toolRegistry.routing_loops.default,
-      coaching: this.toolRegistry.routing_loops.coaching,
-      planning: this.toolRegistry.routing_loops.default,
-      reflection: this.toolRegistry.routing_loops.default,
-      growth: this.toolRegistry.routing_loops.growth_tracking
-    };
-
-    return loopMap[queryType] || this.toolRegistry.routing_loops.default;
   }
+
+  private async selectRoutingLoop(
+    queryType: string, 
+    toolOverride?: string,
+    optimization?: any
+  ): Promise<string[]> {
+    // Build routing loop based on what's actually needed
+    const routingLoop: string[] = [];
+    
+    // Only add context_rewriter if not skipped
+    if (!optimization?.skipContextRewrite) {
+      routingLoop.push('context_rewriter');
+    }
+    
+    // Only add retrieval_aggregator if not skipped
+    // Check both query optimizer AND our Tier 1 model's decision
+    const shouldSkipRetrieval = optimization?.skipRetrieval || this.queryOptimizationHints?.skipRetrieval;
+    if (!shouldSkipRetrieval) {
+      routingLoop.push('retrieval_aggregator');
+    }
+    
+    // Select the actual tool(s) to use
+    if (toolOverride && this.toolRegistry.tools.find(t => t.name === toolOverride)) {
+      routingLoop.push(toolOverride);
+    } else {
+      const message = this.currentRequest?.message || '';
+      
+      // Check if this query needs sophisticated tool selection
+      if (this.needsAdvancedToolSelection(message, queryType)) {
+        // Use Tier 3 model for complex tool orchestration
+        const tools = await this.selectToolsWithAI(message, queryType);
+        routingLoop.push(...tools);
+      } else {
+        // Simple cases: use rule-based selection
+        const selectedTool = this.selectBestToolForQuery(queryType, message);
+        routingLoop.push(selectedTool);
+      }
+    }
+    
+    return routingLoop;
+  }
+  
+  private needsAdvancedToolSelection(message: string, queryType: string): boolean {
+    const lowerMessage = message.toLowerCase();
+    
+    // Indicators of complex, multi-faceted requests
+    const complexIndicators = [
+      // Multiple tasks in one request
+      /\band\s+(also|then|after|plus)\b/,
+      /first.*then/,
+      /help me.*and.*(also|then)/,
+      
+      // Vague or open-ended requests
+      /how (do|can) i (get better|improve|succeed)/,
+      /struggling with/,
+      /having trouble/,
+      /need help with everything/,
+      /where (do|should) i start/,
+      
+      // Meta-learning requests
+      /how (do|should) i (study|learn|approach)/,
+      /best way to/,
+      /strategy for/,
+      
+      // Requests that span multiple domains
+      /prepare.*exam.*and.*write/,
+      /understand.*apply.*practice/,
+    ];
+    
+    // Check for complexity indicators
+    if (complexIndicators.some(pattern => pattern.test(lowerMessage))) {
+      return true;
+    }
+    
+    // Check for ambiguous query types
+    const wordCount = message.split(' ').length;
+    if (queryType === 'learning' && wordCount > 15) {
+      // Longer learning queries often need nuanced tool selection
+      return true;
+    }
+    
+    return false;
+  }
+  
+  private async selectToolsWithAI(message: string, queryType: string): Promise<string[]> {
+    const systemPrompt = `You are Ellen's tool selector. Analyze the student's request and select the most appropriate pedagogical tools.
+
+Available tools:
+- socratic_tool: Default for conceptual understanding through guided questioning
+- reflection_tool: For metacognitive reflection and self-assessment  
+- retrieval: For practice questions and testing
+- extension_tool: For applying concepts to new contexts
+- genealogy_tool: For exploring conceptual origins and history
+- writing_coach: For essay and paper writing support
+- note_assistant: For note-taking strategies
+- plan_manager: For study planning with spaced practice
+- focus_session: For focused work sessions
+- strategy_selector: For choosing learning strategies
+- problem_solver: For step-by-step problem solving
+- learning_diagnostic: For identifying learning gaps
+
+Rules:
+1. Default to socratic_tool for general learning queries
+2. Select multiple tools ONLY if the request clearly requires different types of support
+3. Order tools from most to least important
+4. Maximum 3 tools per request
+5. Return tool names as a JSON array
+
+Examples:
+"What is photosynthesis?" → ["socratic_tool"]
+"I don't understand calculus" → ["socratic_tool"]
+"Help me study for my exam and write my paper" → ["plan_manager", "writing_coach"]
+"I'm struggling with physics problems" → ["problem_solver", "socratic_tool"]`;
+
+    // Use Tier 3 model for sophisticated reasoning
+    const { model } = modelSelection.selectModel({
+      tool: 'tool_selection',
+      requiresReasoning: true,
+      complexity: 3
+    });
+
+    const { text } = await generateText({
+      model,
+      system: systemPrompt,
+      prompt: `Query type: ${queryType}\nStudent request: ${message}\n\nSelect appropriate tools:`,
+      temperature: 0.3
+    });
+
+    try {
+      // Parse the JSON array of tools
+      const tools = JSON.parse(text || '["socratic_tool"]');
+      
+      // Validate tools exist
+      const validTools = tools.filter((tool: string) => 
+        this.toolRegistry.tools.find(t => t.name === tool)
+      );
+      
+      return validTools.length > 0 ? validTools : ['socratic_tool'];
+    } catch (error) {
+      console.error('Error parsing AI tool selection:', error);
+      return ['socratic_tool']; // Fallback to Socratic
+    }
+  }
+  
+  private selectBestToolForQuery(queryType: string, message: string): string {
+    const lowerMessage = message.toLowerCase();
+    
+    // Query type specific tool selection
+    switch (queryType) {
+      case 'coaching':
+        // Only select specific coaching tools for clear intent
+        if (lowerMessage.includes('write') || lowerMessage.includes('essay') || lowerMessage.includes('paper')) {
+          return 'writing_coach';
+        }
+        if (lowerMessage.includes('note') || lowerMessage.includes('lecture')) {
+          return 'note_assistant';
+        }
+        if (lowerMessage.includes('email')) {
+          return 'email_coach';
+        }
+        if (lowerMessage.includes('office hour') || lowerMessage.includes('professor')) {
+          return 'office_hours_coach';
+        }
+        // Default to Socratic for general coaching
+        return 'socratic_tool';
+        
+      case 'planning':
+        if (lowerMessage.includes('focus') || lowerMessage.includes('pomodoro')) {
+          return 'focus_session';
+        }
+        return 'plan_manager';
+        
+      case 'reflection':
+        return 'reflection_tool';
+        
+      case 'growth':
+        return 'growth_compass_tracker';
+        
+      case 'learning':
+      default:
+        // Only use specialized tools for very specific requests
+        
+        // Practice/testing requests
+        if (lowerMessage.includes('quiz me') || lowerMessage.includes('test me') || 
+            lowerMessage.includes('practice questions')) {
+          return 'retrieval';
+        }
+        
+        // Explicit reflection requests
+        if (lowerMessage.includes('help me reflect') || lowerMessage.includes('think about what')) {
+          return 'reflection_tool';
+        }
+        
+        // Clear application requests
+        if (lowerMessage.includes('how can i apply') || lowerMessage.includes('real world example')) {
+          return 'extension_tool';
+        }
+        
+        // Specific history/origins questions
+        if (lowerMessage.includes('history of') || lowerMessage.includes('origin of')) {
+          return 'genealogy_tool';
+        }
+        
+        // Explicit planning requests
+        if (lowerMessage.includes('help me plan') || lowerMessage.includes('study schedule')) {
+          return 'plan_manager';
+        }
+        
+        // Explicit memory tool requests
+        if (lowerMessage.includes('make flashcards') || lowerMessage.includes('help me memorize')) {
+          return 'flashcard_generator';
+        }
+        
+        // Explicit visualization requests
+        if (lowerMessage.includes('concept map') || lowerMessage.includes('draw a diagram')) {
+          return 'concept_mapper';
+        }
+        
+        // DEFAULT: Use Socratic method for all general learning queries
+        // This includes: "what is X?", "explain Y", "I don't understand Z", 
+        // "how does A work?", "why does B happen?", etc.
+        return 'socratic_tool';
+    }
+  }
+  
+  private currentRequest: EllenRequest | null = null;
 
   private async rewriteQuery(request: EllenRequest): Promise<string> {
     if (!request.context?.priorTurns?.length) {
@@ -214,9 +534,9 @@ export class EllenOrchestrator {
       .map(turn => `${turn.role}: ${turn.content}`)
       .join('\n');
 
-    const { model } = routeToModel({ 
-      provider: 'openai',
-      tier: 'S' as const
+    // Use Tier 1 (Simple/Fast) for tool selection
+    const { model } = modelSelection.selectModel({
+      requiresReasoning: false
     });
 
     const { text } = await generateText({
@@ -256,12 +576,40 @@ export class EllenOrchestrator {
 
     const results = await Promise.all(retrievalPromises);
     
+    // Flatten and filter empty results
+    const flatResults = results.flat().filter(r => r && r.score);
+    
+    if (flatResults.length === 0) {
+      // No vectors found - log this as a content gap
+      await topicRegistry.logMissingTopic({
+        query,
+        userId: this.currentRequest?.context?.userId,
+        sessionId: this.currentRequest?.context?.sessionId,
+        timestamp: Date.now(),
+        queryType,
+        namespace: namespaces[0]
+      });
+      
+      console.log(`[Retrieval] No vectors found for: "${query}" - using LLM fallback`);
+      
+      // Return a special marker indicating LLM fallback should be used
+      return [{
+        id: 'llm-fallback',
+        score: 0,
+        metadata: {
+          text: null,
+          source: 'LLM Knowledge Base',
+          fallback: true
+        }
+      }];
+    }
+    
     // Apply RRF fusion if multiple namespaces returned results
-    if (results.length > 1) {
+    if (results.length > 1 && flatResults.length > 0) {
       return this.applyRRFFusion(results);
     }
 
-    return results[0] || [];
+    return flatResults;
   }
 
   private selectNamespaces(queryType: string): string[] {
@@ -317,30 +665,43 @@ export class EllenOrchestrator {
       .map(entry => entry.item);
   }
 
-  private determineModelTier(request: EllenRequest, queryType: string): ModelTier {
-    // Check escalation conditions
-    const contextLength = JSON.stringify(request.context || {}).length;
-    const turnCount = request.context?.priorTurns?.length || 0;
-
-    // Complex reasoning or long context triggers escalation
-    if (contextLength > 4000 || turnCount > 5) {
-      return MODEL_TIERS.M;
-    }
-
-    // Math or technical content might need better model
-    if (request.message.toLowerCase().match(/calculus|statistics|proof|algorithm/)) {
-      return MODEL_TIERS.M;
-    }
-
-    // Default to small model for efficiency
-    return MODEL_TIERS.S;
+  private getOptimalModel(toolName: string, request: EllenRequest) {
+    const toolConfig = getToolConfig(toolName);
+    const message = request.message.toLowerCase();
+    
+    // Check for complexity indicators
+    const complexityIndicators = [
+      'explain in detail',
+      'comprehensive',
+      'step by step',
+      'advanced',
+      'complex',
+      'elaborate'
+    ];
+    
+    const hasComplexity = complexityIndicators.some(indicator => 
+      message.includes(indicator)
+    );
+    
+    // Build context for model selection
+    const selectionContext = {
+      tool: toolName,
+      tokenCount: request.context?.priorTurns?.reduce((acc, turn) => 
+        acc + (turn.content?.length || 0), 0) || 0,
+      complexity: hasComplexity ? 1 : 0, // Adds 1 tier if complex
+      userPreference: request.modelPreference,
+      requiresReasoning: toolConfig.category === 'diagnostic',
+      requiresCreativity: ['writing_coach', 'analogy_builder', 'extension_tool'].includes(toolName)
+    };
+    
+    return modelSelection.selectModel(selectionContext);
   }
 
   private async executeRoutingLoop(
     routingLoop: string[],
     request: EllenRequest,
     retrievalResults: any[],
-    modelTier: ModelTier
+    modelRouting: any
   ): Promise<any> {
     const toolResults: any = {
       toolsUsed: [],
@@ -360,7 +721,7 @@ export class EllenOrchestrator {
         tool,
         request,
         retrievalResults,
-        modelTier
+        modelRouting
       );
 
       toolResults.toolsUsed.push(selectedTool);
@@ -374,32 +735,94 @@ export class EllenOrchestrator {
     tool: any,
     request: EllenRequest,
     retrievalResults: any[],
-    modelTier: ModelTier
+    modelRouting: any
   ): Promise<any> {
-    // This is where specific tool logic would be implemented
-    // For now, we'll create a general implementation
+    // Check if this is a new Ellen tool
+    const toolName = tool.name.toLowerCase().replace(/_tool$/, '');
+    const isNewTool = Object.values(ELLEN_TOOLS).includes(toolName as any);
     
-    const systemPrompt = this.getToolSystemPrompt(tool);
-    const context = this.formatRetrievalContext(retrievalResults);
+    if (isNewTool) {
+      // Use the new EllenMasterOrchestrator
+      // Model routing already provided, use it directly
+      const context = this.formatRetrievalContext(retrievalResults);
+      
+      // Check for LLM fallback case
+      const isLLMFallback = retrievalResults.length === 1 && retrievalResults[0].metadata?.fallback;
+      
+      const toolContext = {
+        userMessage: request.message,
+        priorMessages: request.context?.priorTurns,
+        retrievalContext: context,
+        learningGoal: request.context?.learningGoal,
+        currentTopic: request.context?.activeTask,
+        sessionType: request.context?.sessionType as any,
+        modelRouting,
+        useLLMFallback: isLLMFallback || !context
+      };
+      
+      const result = await ellenTools.execute(
+        request.message,
+        toolName,
+        toolContext,
+        modelRouting
+      );
+      
+      // Track tool usage for pattern analysis
+      this.trackToolUse(tool.name);
+      
+      // Normalize response format
+      if (typeof result === 'object' && 'content' in result) {
+        return {
+          tool: tool.name,
+          response: result.content
+        };
+      } else if (typeof result === 'object' && 'feedback' in result) {
+        return {
+          tool: tool.name,
+          response: result.feedback
+        };
+      } else if (typeof result === 'object' && 'plan' in result) {
+        return {
+          tool: tool.name,
+          response: JSON.stringify(result.plan, null, 2)
+        };
+      } else if (typeof result === 'string') {
+        return {
+          tool: tool.name,
+          response: result
+        };
+      } else {
+        return {
+          tool: tool.name,
+          response: JSON.stringify(result)
+        };
+      }
+    } else {
+      // Fall back to old implementation for legacy tools
+      const systemPrompt = this.getToolSystemPrompt(tool);
+      const context = this.formatRetrievalContext(retrievalResults);
 
-    // Map model tier to provider settings
-    const providerSettings = modelTier.tier === 'F' 
-      ? { provider: 'anthropic' as const, tier: 'F' as const }
-      : { provider: 'openai' as const, tier: modelTier.tier as 'S' | 'M' };
+      // Use the provided model routing
+      const { model } = modelRouting;
+      
+      // Check if we have context or need to use LLM's knowledge
+      const isLLMFallback = retrievalResults.length === 1 && retrievalResults[0].metadata?.fallback;
+      const prompt = isLLMFallback || !context
+        ? `Using your knowledge, respond to: ${request.message}`
+        : `Context:\n${context}\n\nUser Query: ${request.message}`;
 
-    const { model } = routeToModel(providerSettings);
+      const { text } = await generateText({
+        model,
+        system: systemPrompt,
+        prompt,
+        temperature: 0.7
+      });
 
-    const { text } = await generateText({
-      model,
-      system: systemPrompt,
-      prompt: `Context:\n${context}\n\nUser Query: ${request.message}`,
-      temperature: 0.7
-    });
-
-    return {
-      tool: tool.name,
-      response: text
-    };
+      return {
+        tool: tool.name,
+        response: text
+      };
+    }
   }
 
   private getToolSystemPrompt(tool: any): string {
@@ -516,9 +939,15 @@ TECHNIQUES BY UTILITY:
   }
 
   private formatRetrievalContext(retrievalResults: any[]): string {
+    // Check if this is an LLM fallback case
+    if (retrievalResults.length === 1 && retrievalResults[0].metadata?.fallback) {
+      return ''; // Return empty context to trigger LLM's own knowledge
+    }
+    
     return retrievalResults
       .slice(0, 3)
       .map(result => result.metadata?.text || '')
+      .filter(text => text.length > 0)
       .join('\n\n');
   }
 
@@ -630,5 +1059,111 @@ TECHNIQUES BY UTILITY:
 
     // This would also integrate with growth-compass-storage.ts
     console.log('Growth Compass metrics tracked for session:', sessionId);
+  }
+  
+  /**
+   * Analyze sentiment if indicators suggest frustration or disengagement
+   */
+  private async analyzeSentimentIfNeeded(request: EllenRequest): Promise<any> {
+    const message = request.message.toLowerCase();
+    
+    // Quick checks that warrant sentiment analysis
+    const needsAnalysis = 
+      message.length < 20 || // Very short responses
+      /but|though|still|hmm|okay|fine|whatever|nevermind/i.test(message) ||
+      /\?{2,}|\.{3,}|!{2,}/i.test(message) || // Multiple punctuation
+      request.context?.priorTurns?.some(turn => 
+        turn.role === 'user' && turn.content.toLowerCase().includes('understand')
+      );
+    
+    if (!needsAnalysis) {
+      return null;
+    }
+    
+    // Import and use the sentiment analysis function
+    const { analyzeStudentSentiment } = await import('./ellen-tools/meta-tools');
+    return await analyzeStudentSentiment(request.message, request.context?.priorTurns);
+  }
+  
+  /**
+   * Handle frustrated or confused students with empathy and alternatives
+   */
+  private async handleFrustration(
+    request: EllenRequest,
+    sentiment: any,
+    sessionId?: string
+  ): Promise<EllenResponse> {
+    const { metaTools } = await import('./ellen-tools/meta-tools');
+    
+    // Determine which meta-tool to use
+    let toolToUse;
+    let toolParams;
+    
+    if (sentiment.needsToolSwitch) {
+      toolToUse = metaTools.toolSwitchHandler;
+      toolParams = {
+        message: request.message,
+        currentTool: this.lastUsedTool || 'socratic_tool',
+        availableTools: Object.keys(ellenTools)
+      };
+    } else if (sentiment.frustrationLevel >= 8) {
+      toolToUse = metaTools.frustrationHandler;
+      toolParams = {
+        message: request.message,
+        previousAttempts: this.recentTools || [],
+        currentTool: this.lastUsedTool || 'socratic_tool'
+      };
+    } else {
+      toolToUse = metaTools.expectationClarifier;
+      toolParams = {
+        message: request.message,
+        context: request.context
+      };
+    }
+    
+    // Execute the meta-tool
+    const result = await toolToUse.execute(toolParams);
+    
+    // Track this interaction
+    if (sessionId) {
+      await this.sessionStorage.addMessage({
+        sessionId,
+        role: 'assistant',
+        content: result.content,
+        metadata: {
+          toolsUsed: [toolToUse.name]
+        }
+      });
+    }
+    
+    // If tool switch was recommended, update for next interaction
+    if (result.metadata?.switchTo) {
+      this.recommendedTool = result.metadata.switchTo;
+    }
+    
+    return {
+      response: result.content,
+      toolsUsed: [toolToUse.name],
+      growthMetrics: {
+        reflectionPrompt: "How did that approach work for you?"
+      },
+      sessionId
+    };
+  }
+  
+  // Track tools for pattern analysis
+  private lastUsedTool?: string;
+  private recentTools: string[] = [];
+  private recommendedTool?: string;
+  
+  /**
+   * Update tool tracking after each use
+   */
+  private trackToolUse(toolName: string) {
+    this.lastUsedTool = toolName;
+    this.recentTools.push(toolName);
+    if (this.recentTools.length > 5) {
+      this.recentTools.shift();
+    }
   }
 }

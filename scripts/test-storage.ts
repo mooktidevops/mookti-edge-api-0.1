@@ -33,18 +33,18 @@ async function testStorageAPI() {
     }
     
     const user = await userResponse.json();
-    console.log('✅ User created:', user.id);
+    console.log('✅ User created:', (user as any).id);
     
     // Test 2: Get User
     console.log('\n2️⃣ Testing user retrieval...');
-    const getUserResponse = await fetch(`${API_URL}/api/storage/users?userId=${user.id}`);
+    const getUserResponse = await fetch(`${API_URL}/api/storage/users?userId=${(user as any).id}`);
     
     if (!getUserResponse.ok) {
       throw new Error(`User retrieval failed: ${await getUserResponse.text()}`);
     }
     
     const retrievedUser = await getUserResponse.json();
-    console.log('✅ User retrieved:', retrievedUser.email);
+    console.log('✅ User retrieved:', (retrievedUser as any).email);
     
     // Test 3: Create Chat
     console.log('\n3️⃣ Testing chat creation...');
@@ -52,7 +52,7 @@ async function testStorageAPI() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId: user.id,
+        userId: (user as any).id,
         title: 'Test Chat',
         visibility: 'private',
       }),
@@ -63,7 +63,7 @@ async function testStorageAPI() {
     }
     
     const chat = await chatResponse.json();
-    console.log('✅ Chat created:', chat.id);
+    console.log('✅ Chat created:', (chat as any).id);
     
     // Test 4: Add Message
     console.log('\n4️⃣ Testing message creation...');
@@ -71,7 +71,7 @@ async function testStorageAPI() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chatId: chat.id,
+        chatId: (chat as any).id,
         role: 'user',
         content: 'Hello, Ellen! Can you help me learn about photosynthesis?',
         model: 'claude-3-opus',
@@ -84,18 +84,18 @@ async function testStorageAPI() {
     }
     
     const message = await messageResponse.json();
-    console.log('✅ Message created:', message.id);
+    console.log('✅ Message created:', (message as any).id);
     
     // Test 5: Get Messages
     console.log('\n5️⃣ Testing message retrieval...');
-    const getMessagesResponse = await fetch(`${API_URL}/api/storage/messages?chatId=${chat.id}`);
+    const getMessagesResponse = await fetch(`${API_URL}/api/storage/messages?chatId=${(chat as any).id}`);
     
     if (!getMessagesResponse.ok) {
       throw new Error(`Message retrieval failed: ${await getMessagesResponse.text()}`);
     }
     
     const messages = await getMessagesResponse.json();
-    console.log('✅ Messages retrieved:', messages.length, 'message(s)');
+    console.log('✅ Messages retrieved:', (messages as any).length, 'message(s)');
     
     // Test 6: Search (will fail without embeddings, but tests the endpoint)
     console.log('\n6️⃣ Testing conversation search...');
@@ -103,7 +103,7 @@ async function testStorageAPI() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId: user.id,
+        userId: (user as any).id,
         query: 'photosynthesis',
         limit: 5,
       }),
@@ -113,7 +113,7 @@ async function testStorageAPI() {
       console.warn('⚠️ Search failed (expected if embeddings not configured):', await searchResponse.text());
     } else {
       const searchResults = await searchResponse.json();
-      console.log('✅ Search completed:', searchResults.length, 'result(s)');
+      console.log('✅ Search completed:', (searchResults as any).length, 'result(s)');
     }
     
     console.log('\n✨ All storage tests completed successfully!');

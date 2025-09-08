@@ -135,7 +135,7 @@ const returnToPathTool = tool({
       .describe("How the user's question relates to the current or upcoming content"),
     user_requested: z.boolean().optional()
       .describe("Whether the user explicitly requested to return/continue the learning path")
-  }),
+  })
 });
 
 const searchDeeperTool = tool({
@@ -147,7 +147,7 @@ const searchDeeperTool = tool({
       .describe("Where to search"),
     reason: z.string()
       .describe("Why this additional context is needed")
-  }),
+  })
 });
 
 const suggestComprehensionCheckTool = tool({
@@ -161,7 +161,7 @@ const suggestComprehensionCheckTool = tool({
       .describe("The practice question or scenario to present"),
     preface: z.string()
       .describe("Introduction explaining this is supplemental practice, not replacing the course assessments")
-  }),
+  })
 });
 
 const explainDifferentlyTool = tool({
@@ -173,7 +173,7 @@ const explainDifferentlyTool = tool({
       .describe("How to explain it differently"),
     explanation: z.string()
       .describe("The alternative explanation")
-  }),
+  })
 });
 
 export default async function handler(req: Request): Promise<Response> {
@@ -221,7 +221,7 @@ export default async function handler(req: Request): Promise<Response> {
     const modelRequest: ModelSelectionRequest = {
       provider: body.provider,
       modelId: body.modelId,
-      tier: 'M' as const, // Default to M tier
+      tier: 2 as const, // Default to tier 2 (balanced)
     };
 
     let modelRouting;
@@ -335,11 +335,11 @@ export default async function handler(req: Request): Promise<Response> {
         },
         toolChoice: 'auto',
         temperature: 0.6,
-        maxTokens: 2048,
+        maxRetries: 2048,
       });
 
       // Return streaming response
-      return new Response(result.toDataStreamResponse().body, {
+      return new Response(result.toTextStreamResponse().body, {
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
@@ -360,7 +360,7 @@ export default async function handler(req: Request): Promise<Response> {
         },
         toolChoice: 'auto',
         temperature: 0.6,
-        maxTokens: 2048,
+        maxRetries: 2048,
       });
 
       const duration = Date.now() - startTime;
@@ -373,8 +373,8 @@ export default async function handler(req: Request): Promise<Response> {
           model: modelRouting.modelId,
           provider: modelRouting.provider,
           usage: {
-            input_tokens: result.usage?.promptTokens || 0,
-            output_tokens: result.usage?.completionTokens || 0,
+            input_tokens: result.usage?.totalTokens || 0,
+            output_tokens: result.usage?.totalTokens || 0,
           },
           ragUsed: body.useRAG !== false && entitlements.features.ragEnabled,
           toolCalls: result.toolCalls,

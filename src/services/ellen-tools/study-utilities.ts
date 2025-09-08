@@ -240,7 +240,23 @@ MAP TYPES:
       model: context.modelRouting.model,
       system: systemPrompt,
       prompt: `Create a concept map for: "${context.content}"
-Include nodes, relationships, and layout suggestions.`,
+
+Return a JSON structure with:
+- nodes: array of {id, label, type (central/primary/secondary/example), level}
+- links: array of {source, target, label, strength (strong/moderate/weak), isCrossLink}
+
+Example format:
+\`\`\`json
+{
+  "nodes": [
+    {"id": "main", "label": "Photosynthesis", "type": "central", "level": 0},
+    {"id": "light", "label": "Light Reactions", "type": "primary", "level": 1}
+  ],
+  "links": [
+    {"source": "main", "target": "light", "label": "consists of", "strength": "strong"}
+  ]
+}
+\`\`\``,
       temperature: 0.7
     });
 
@@ -248,69 +264,112 @@ Include nodes, relationships, and layout suggestions.`,
   }
 
   private parseConceptMapResponse(text: string, context: StudyContext): ConceptMapOutput {
-    // Create sample concept map structure
-    const nodes: ConceptNode[] = [
-      {
+    // Try to parse the LLM response for actual concept map data
+    const nodes: ConceptNode[] = [];
+    const links: ConceptLink[] = [];
+    
+    try {
+      // Look for JSON structure in the response
+      const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/);
+      if (jsonMatch) {
+        const jsonData = JSON.parse(jsonMatch[1]);
+        
+        // Parse nodes if present
+        if (jsonData.nodes && Array.isArray(jsonData.nodes)) {
+          jsonData.nodes.forEach((node: any, index: number) => {
+            nodes.push({
+              id: node.id || `node_${index}`,
+              label: node.label || node.name || 'Concept',
+              type: node.type || (index === 0 ? 'central' : 'primary'),
+              level: node.level || Math.floor(index / 3),
+              x: node.x || (200 + (index % 3) * 200),
+              y: node.y || (50 + Math.floor(index / 3) * 100)
+            });
+          });
+        }
+        
+        // Parse links if present
+        if (jsonData.links && Array.isArray(jsonData.links)) {
+          jsonData.links.forEach((link: any) => {
+            links.push({
+              source: link.source || link.from,
+              target: link.target || link.to,
+              label: link.label || link.relationship || 'relates to',
+              strength: link.strength || 'moderate',
+              isCrossLink: link.isCrossLink || false
+            });
+          });
+        }
+      }
+      
+      // If no JSON found, try to extract concepts from the text
+      if (nodes.length === 0) {
+        // Extract key concepts mentioned in the response
+        const conceptPattern = /(?:concept|topic|idea|principle|element):\s*([^,\n]+)/gi;
+        const relationPattern = /([^,\n]+)\s+(?:leads to|causes|requires|includes|is)\s+([^,\n]+)/gi;
+        
+        let match;
+        let nodeIndex = 0;
+        const nodeMap = new Map<string, string>();
+        
+        // Extract concepts
+        while ((match = conceptPattern.exec(text)) !== null && nodeIndex < 10) {
+          const concept = match[1].trim();
+          const nodeId = `node_${nodeIndex}`;
+          nodeMap.set(concept.toLowerCase(), nodeId);
+          
+          nodes.push({
+            id: nodeId,
+            label: concept,
+            type: nodeIndex === 0 ? 'central' : 'primary',
+            level: nodeIndex === 0 ? 0 : 1,
+            x: 400 + (nodeIndex % 3 - 1) * 200,
+            y: 50 + Math.floor(nodeIndex / 3) * 100
+          });
+          nodeIndex++;
+        }
+        
+        // Extract relationships
+        while ((match = relationPattern.exec(text)) !== null) {
+          const source = match[1].trim().toLowerCase();
+          const target = match[2].trim().toLowerCase();
+          
+          if (nodeMap.has(source) && nodeMap.has(target)) {
+            links.push({
+              source: nodeMap.get(source)!,
+              target: nodeMap.get(target)!,
+              label: 'relates to',
+              strength: 'moderate'
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing concept map response:', error);
+    }
+    
+    // If still no nodes, create a minimal structure with explanation
+    if (nodes.length === 0) {
+      const userQuery = context.content || 'the topic';
+      nodes.push({
         id: 'central',
-        label: 'Main Concept',
+        label: userQuery,
         type: 'central',
         level: 0,
         x: 400,
         y: 50
-      },
-      {
-        id: 'sub1',
-        label: 'Supporting Concept 1',
-        type: 'primary',
+      });
+      
+      // Add a note explaining the issue
+      nodes.push({
+        id: 'note',
+        label: 'Concept map generation in progress...',
+        type: 'secondary' as const,
         level: 1,
-        x: 200,
+        x: 400,
         y: 150
-      },
-      {
-        id: 'sub2',
-        label: 'Supporting Concept 2',
-        type: 'primary',
-        level: 1,
-        x: 600,
-        y: 150
-      },
-      {
-        id: 'detail1',
-        label: 'Specific Example',
-        type: 'example',
-        level: 2,
-        x: 200,
-        y: 250
-      }
-    ];
-
-    const links: ConceptLink[] = [
-      {
-        source: 'central',
-        target: 'sub1',
-        label: 'includes',
-        strength: 'strong'
-      },
-      {
-        source: 'central',
-        target: 'sub2',
-        label: 'requires',
-        strength: 'strong'
-      },
-      {
-        source: 'sub1',
-        target: 'detail1',
-        label: 'demonstrated by',
-        strength: 'moderate'
-      },
-      {
-        source: 'sub2',
-        target: 'detail1',
-        label: 'applies to',
-        strength: 'weak',
-        isCrossLink: true
-      }
-    ];
+      });
+    }
 
     return {
       nodes,

@@ -1,0 +1,25 @@
+MODEL SELECTION ACTUAL TEST
+==================================================
+CHECK SERVER LOGS FOR [ModelSelection] LINES
+
+
+Testing: "What is 2+2?"
+✅ 12583ms - Tools: retrieval_aggregator, socratic_tool
+   → Likely Tier 4 (gemini-2.5-pro)
+
+Testing: "What is photosynthesis?"
+✅ 8840ms - Tools: retrieval_aggregator, socratic_tool
+   → Likely Tier 3 (o4-mini)
+
+Testing: "Explain step by step how to solve differential equations"
+✅ 12002ms - Tools: retrieval_aggregator, socratic_tool
+   → Likely Tier 4 (gemini-2.5-pro)
+
+==================================================
+ACTUAL RESULTS:
+Average: 11142ms
+Min: 8840ms
+Max: 12583ms
+
+⚠️  CHECK SERVER TERMINAL FOR [ModelSelection] LOG LINES
+These show the ACTUAL models being selected, not guesses.

@@ -117,6 +117,7 @@ export interface SessionFilters {
 }
 
 export interface SessionCreateRequest {
+  id?: string;  // Optional custom session ID
   userId: string;
   type: SessionType;
   title?: string;
@@ -138,5 +139,7 @@ export interface SessionUpdateRequest {
 
 export interface SessionMessageAddRequest {
   sessionId: string;
-  message: Omit<SessionMessage, 'id' | 'timestamp'>;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  metadata?: SessionMessage['metadata'];
 }

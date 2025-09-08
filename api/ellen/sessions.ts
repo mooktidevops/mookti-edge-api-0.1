@@ -23,26 +23,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const url = new URL(request.url);
-    const pathSegments = url.pathname.split('/').filter(Boolean);
-    const sessionId = pathSegments[pathSegments.length - 1] !== 'sessions' 
-      ? pathSegments[pathSegments.length - 1] 
-      : null;
-
-    if (sessionId) {
-      // Get specific session
-      const session = await sessionStorage.getSession(sessionId);
-      
-      if (!session) {
-        return NextResponse.json(
-          { error: 'Session not found' },
-          { status: 404 }
-        );
-      }
-
-      return NextResponse.json(session);
-    } else {
-      // Get user's sessions
-      const userId = url.searchParams.get('userId');
+    
+    // Get user's sessions
+    const userId = url.searchParams.get('userId');
       
       if (!userId) {
         return NextResponse.json(
@@ -66,7 +49,6 @@ export async function GET(request: NextRequest) {
       }
 
       return NextResponse.json({ sessions });
-    }
   } catch (error) {
     console.error('Session GET error:', error);
     return NextResponse.json(
@@ -94,6 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     const session = await sessionStorage.createSession({
+      id: body.id,  // Pass custom ID if provided
       userId: body.userId,
       type: body.type as SessionType || 'study',
       title: body.title,

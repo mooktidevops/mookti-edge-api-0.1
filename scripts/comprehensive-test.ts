@@ -43,7 +43,7 @@ async function runTest(name: string, testFn: () => Promise<boolean>): Promise<vo
 async function testAPIHealth(): Promise<boolean> {
   const response = await fetch(`${API_BASE}/api/test-providers`);
   const data = await response.json();
-  return response.ok && data.providers;
+  return response.ok && (data as any).providers;
 }
 
 // Test 2: Chat Endpoint
@@ -91,8 +91,8 @@ async function testEllenSessionCreation(): Promise<boolean> {
   
   if (response.ok) {
     const session = await response.json();
-    global.testSessionId = session.id;
-    console.log(`   Created session: ${session.id}`);
+    (global as any).testSessionId = (session as any).id;
+    console.log(`   Created session: ${(session as any).id}`);
   }
   
   return response.ok;

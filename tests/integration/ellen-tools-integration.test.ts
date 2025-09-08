@@ -155,7 +155,7 @@ describe('Ellen Pedagogical Tools Integration', () => {
 
       expect(response.content).toBeDefined();
       // Should include testing elements
-      expect(response.content).toLowerCase()).toMatch(
+      expect(response.content.toLowerCase()).toMatch(
         /recall|remember|what|explain|describe/i
       );
     });

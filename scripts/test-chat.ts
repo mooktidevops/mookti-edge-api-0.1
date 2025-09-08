@@ -74,7 +74,7 @@ async function testEllenSession() {
   }
 
   const session = await sessionResponse.json();
-  console.log('✅ Created Ellen session:', session.id);
+  console.log('✅ Created Ellen session:', (session as any).id);
   
   // Send message to Ellen
   const chatResponse = await fetch(`${API_BASE}/api/ellen/chat`, {
@@ -84,10 +84,10 @@ async function testEllenSession() {
       'x-api-key': API_KEY
     },
     body: JSON.stringify({
-      sessionId: session.id,
+      sessionId: (session as any).id,
       message: 'I want to understand photosynthesis. Can you help me learn using the Socratic method?',
       context: {
-        userId: session.userId
+        userId: (session as any).userId
       }
     })
   });
@@ -96,11 +96,11 @@ async function testEllenSession() {
     const result = await chatResponse.json();
     console.log('\n📚 Ellen\'s response:');
     console.log('----------------------------');
-    console.log(result.response);
+    console.log((result as any).response);
     console.log('----------------------------');
-    console.log('\nTools used:', result.toolsUsed);
-    console.log('Query type:', result.queryType);
-    console.log('Session updated:', result.sessionUpdated);
+    console.log('\nTools used:', (result as any).toolsUsed);
+    console.log('Query type:', (result as any).queryType);
+    console.log('Session updated:', (result as any).sessionUpdated);
     console.log('\n✅ Ellen pedagogical system working!');
   } else {
     console.log('❌ Ellen chat failed:', await chatResponse.text());
@@ -114,7 +114,7 @@ async function testEllenSession() {
       'x-api-key': API_KEY
     },
     body: JSON.stringify({
-      sessionId: session.id,
+      sessionId: (session as any).id,
       keyTakeaways: ['Photosynthesis converts light to chemical energy'],
       understandingRating: 4
     })
@@ -151,7 +151,7 @@ async function testChatV2() {
 
     if (response.ok) {
       const result = await response.json();
-      console.log(`✅ ${provider}: ${result.content}`);
+      console.log(`✅ ${provider}: ${(result as any).content}`);
     } else {
       console.log(`❌ ${provider} failed:`, response.status);
     }
@@ -171,7 +171,7 @@ async function runAllTests() {
     if (health.ok) {
       const providers = await health.json();
       console.log('✅ Server is up!');
-      console.log('Available providers:', Object.keys(providers.providers).filter(p => providers.providers[p]).join(', '));
+      console.log('Available providers:', Object.keys((providers as any).providers).filter(p => (providers as any).providers[p]).join(', '));
     } else {
       console.log('❌ Server health check failed');
       return;

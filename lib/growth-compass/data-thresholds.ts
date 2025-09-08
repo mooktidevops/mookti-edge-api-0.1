@@ -186,7 +186,7 @@ export function getDataSufficiencyMessages(sufficiency: DataSufficiency): {
     case 'collecting':
       messages.primary = 'Building your baseline (Week 1-2)';
       messages.details.push('Ellen is learning your patterns');
-      messages.details.push(`${sufficiency.sessionsLogged} sessions logged so far`);
+      messages.details.push(`${(sufficiency as any).sessionsLogged || 0} sessions logged so far`);
       messages.recommendations.push('Keep logging sessions to discover your rhythm');
       break;
       

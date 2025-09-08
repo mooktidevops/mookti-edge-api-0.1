@@ -28,7 +28,7 @@ export class EllenSessionStorage {
 
   // Create a new session
   async createSession(request: SessionCreateRequest): Promise<EllenSession> {
-    const sessionId = this.generateSessionId();
+    const sessionId = request.id || this.generateSessionId();
     const now = new Date();
 
     // If resuming, load the previous session as context
@@ -142,7 +142,9 @@ export class EllenSessionStorage {
     const message: SessionMessage = {
       id: this.generateMessageId(),
       timestamp: new Date(),
-      ...request.message
+      role: request.role,
+      content: request.content,
+      metadata: request.metadata
     };
 
     session.messages.push(message);

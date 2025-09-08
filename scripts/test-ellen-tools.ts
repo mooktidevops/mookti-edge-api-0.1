@@ -58,10 +58,9 @@ async function runTest(testCase: typeof TEST_CASES[0]) {
   try {
     // Get model routing (would normally come from request)
     const modelRouting = await routeToModel({
-      task: testCase.message,
       complexity: 'medium',
       toolName: testCase.tool
-    });
+    } as any);
 
     // Execute the tool
     const result = await ellenTools.execute(
@@ -148,9 +147,8 @@ async function runAllTests() {
     console.log(`\n🔄 Auto-routing: "${message}"`);
     try {
       const modelRouting = await routeToModel({
-        task: message,
         complexity: 'medium'
-      });
+      } as any);
 
       const result = await ellenTools.execute(
         message,

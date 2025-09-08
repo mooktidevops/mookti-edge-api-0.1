@@ -1,5 +1,5 @@
 import '../../lib/polyfills';
-import storageService from '../../lib/storage/storage-service';
+import databaseStorage from '../../src/lib/db/storage-service';
 
 export const config = {
   runtime: 'edge',
@@ -34,25 +34,8 @@ export default async function handler(request: Request): Promise<Response> {
         });
       }
       
-      if (messageId) {
-        // Get specific message
-        const message = await storageService.getMessage(chatId, messageId);
-        if (!message) {
-          return new Response(JSON.stringify({ error: 'Message not found' }), {
-            status: 404,
-            headers: { 'Content-Type': 'application/json' }
-          });
-        }
-        return new Response(JSON.stringify(message), {
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-      
       // Get all messages for chat
-      const messages = await storageService.getMessages(
-        chatId,
-        limit ? parseInt(limit) : undefined
-      );
+      const messages = await databaseStorage.getMessagesByChatId(chatId);
       
       return new Response(JSON.stringify(messages), {
         headers: { 'Content-Type': 'application/json' }
@@ -60,38 +43,22 @@ export default async function handler(request: Request): Promise<Response> {
     }
     
     if (method === 'POST') {
-      const body: any = await request.json();
-      const { chatId, role, content, parts, model, provider } = body;
+      const body: any = await request.json() as { message?: string; context?: any };
+      const { chatId, role, parts, attachments } = body;
       
-      if (!chatId || !role) {
-        return new Response(JSON.stringify({ error: 'chatId and role required' }), {
+      if (!chatId || !role || !parts) {
+        return new Response(JSON.stringify({ error: 'chatId, role, and parts are required' }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' }
         });
       }
       
-      const message = await storageService.addMessage(chatId, {
+      const message = await databaseStorage.createMessage(
+        chatId,
         role,
-        content: content || '',
         parts,
-        model,
-        provider,
-      });
-      
-      // Update chat's last message time
-      await storageService.updateChat(chatId, {
-        lastMessageAt: new Date(),
-      });
-      
-      // If there's content and it's from the user, create embedding
-      if (content && role === 'user') {
-        try {
-          await storageService.generateAndStoreEmbedding(message);
-        } catch (embedError) {
-          console.warn('Failed to create embedding:', embedError);
-          // Don't fail the request if embedding fails
-        }
-      }
+        attachments || []
+      );
       
       return new Response(JSON.stringify(message), {
         headers: { 'Content-Type': 'application/json' }
@@ -109,10 +76,10 @@ export default async function handler(request: Request): Promise<Response> {
         });
       }
       
-      const deleted = await storageService.deleteMessagesByChatIdAfterTimestamp(
+      const deleted = await databaseStorage.deleteMessagesAfterTimestamp(
         chatId,
         new Date(afterTimestamp)
-      )
+      );
       
       return new Response(JSON.stringify({ deleted }), {
         headers: { 'Content-Type': 'application/json' }

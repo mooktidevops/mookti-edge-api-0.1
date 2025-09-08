@@ -1,0 +1,53 @@
+RETRIEVAL SKIPPING TEST
+==================================================
+Testing if Tier 1 model correctly identifies when retrieval is needed
+
+
+=== Simple arithmetic (should skip) ===
+Query: "What is 2+2?"
+✅ Response in 14886ms
+   Tools: retrieval_aggregator → socratic_tool
+   Retrieval: ❌ USED (slow)
+
+=== Complex concept (needs retrieval) ===
+Query: "What is photosynthesis?"
+✅ Response in 6722ms
+   Tools: retrieval_aggregator → socratic_tool
+   Retrieval: ❌ USED (slow)
+
+=== Meta conversation (should skip) ===
+Query: "Thanks"
+✅ Response in 10997ms
+   Tools: socratic_tool
+   Retrieval: ✅ SKIPPED (fast)
+
+=== Complex request (needs retrieval) ===
+Query: "Explain quantum mechanics"
+✅ Response in 9652ms
+   Tools: retrieval_aggregator → socratic_tool
+   Retrieval: ❌ USED (slow)
+
+=== Yes/No question (should skip) ===
+Query: "Is 5 greater than 3?"
+✅ Response in 5883ms
+   Tools: retrieval_aggregator → socratic_tool
+   Retrieval: ❌ USED (slow)
+
+=== Calculation (should skip) ===
+Query: "Calculate 15 * 7"
+✅ Response in 8813ms
+   Tools: retrieval_aggregator → socratic_tool
+   Retrieval: ❌ USED (slow)
+
+==================================================
+SUMMARY
+==================================================
+
+Should skip retrieval: 1/4 correct
+Needs retrieval: 2/2 correct
+
+Average time WITH retrieval: 9191ms
+Average time WITHOUT retrieval: 10997ms
+Speed improvement: -20%
+
+✨ Check server logs for [Retrieval] lines showing when it's skipped

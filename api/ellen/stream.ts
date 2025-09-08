@@ -36,9 +36,7 @@ export async function POST(request: NextRequest) {
         // Process request
         const response = await orchestrator.processRequest({
           message: body.message,
-          context: body.context || {},
-          intent: body.intent,
-          toolOverride: body.toolOverride
+          context: body.context || {}
         });
 
         // Stream the response in chunks

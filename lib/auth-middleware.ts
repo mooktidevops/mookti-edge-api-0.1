@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isDevMode, getDevUser } from './config/dev-mode';
 
 // TEMPORARY: Simple API key authentication for preview deployment
 // TODO: Replace with Firebase auth before production launch (see MOOKTI_COMPREHENSIVE_DEV_PLAN_V5.md)
 
 export async function verifyApiAuth(request: NextRequest): Promise<{ success: boolean; error?: string; userId?: string }> {
+  // Dev mode bypass
+  if (isDevMode(request as unknown as Request)) {
+    const devUserId = request.headers.get('X-Dev-User-Id');
+    const devUser = getDevUser(request as unknown as Request);
+    return {
+      success: true,
+      userId: devUserId || (devUser ? devUser.id : 'dev-user-default')
+    };
+  }
+  
   // Check for API key in Authorization header
   const authHeader = request.headers.get('Authorization');
   

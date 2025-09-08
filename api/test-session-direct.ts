@@ -14,9 +14,8 @@ export async function GET(request: NextRequest) {
       type: 'study',
       title: 'Direct Test Session',
       context: {
-        test: true,
         timestamp: new Date().toISOString()
-      }
+      } as any
     });
 
     return NextResponse.json({

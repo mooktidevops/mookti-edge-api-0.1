@@ -28,7 +28,7 @@ export default async function handler(request: Request): Promise<Response> {
   }
   
   try {
-    const body: any = await request.json();
+    const body: any = await request.json() as { userId?: string; [key: string]: any };
     const { userId, query, limit } = body;
     
     if (!userId || !query) {

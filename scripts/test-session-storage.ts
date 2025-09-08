@@ -23,7 +23,7 @@ async function testSessionStorage() {
         learningGoal: 'Test storage layer',
         currentTask: 'Verify functionality'
       },
-      intention: {
+      sessionGoal: {
         type: 'exploration',
         description: 'Testing session storage',
         targetDuration: 30
@@ -38,7 +38,7 @@ async function testSessionStorage() {
       sessionId: session.id,
       role: 'user',
       content: 'What is machine learning?',
-      context: {}
+      metadata: {}
     });
     console.log(`✅ Message added: ${message.id}`);
     
@@ -48,9 +48,8 @@ async function testSessionStorage() {
       sessionId: session.id,
       role: 'assistant',
       content: 'Machine learning is a subset of artificial intelligence...',
-      context: {
-        toolsUsed: ['SearchTool', 'SocraticTool'],
-        citations: ['ML fundamentals guide']
+      metadata: {
+        toolsUsed: ['SearchTool', 'SocraticTool']
       }
     });
     console.log(`✅ Assistant message added with tools: ${assistantMessage.metadata?.toolsUsed?.join(', ')}`);

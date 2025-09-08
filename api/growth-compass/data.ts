@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.json() as { userId?: string; [key: string]: any };
     const { userId, ...updates } = body;
     
     if (!userId) {

@@ -14,18 +14,18 @@ export interface ModelConfig {
     functionCalling: boolean;
     vision: boolean;
   };
-  tier?: 'S' | 'M' | 'F';
+  tier?: 1 | 2 | 3 | 4;  // 1=Simple/Fast, 2=Balanced, 3=Complex, 4=Frontier
 }
 
-// Available models catalog
+// Available models catalog - ONLY current/future models we're using
 export const availableModels: ModelConfig[] = [
-  // Anthropic models
+  // Anthropic models - Current generation
   {
-    id: 'claude-3-opus-20240229',
-    name: 'Claude 3 Opus',
+    id: 'claude-opus-4-20250514',
+    name: 'Claude Opus 4.1',
     provider: 'anthropic',
     contextWindow: 200000,
-    maxOutputTokens: 4096,
+    maxOutputTokens: 32000,
     costPer1kInput: 0.015,
     costPer1kOutput: 0.075,
     capabilities: {
@@ -33,14 +33,14 @@ export const availableModels: ModelConfig[] = [
       functionCalling: true,
       vision: true,
     },
-    tier: 'F',
+    tier: 4,
   },
   {
-    id: 'claude-3-5-sonnet-20241022',
-    name: 'Claude 3.5 Sonnet',
+    id: 'claude-sonnet-4-20250514',
+    name: 'Claude Sonnet 4',
     provider: 'anthropic',
     contextWindow: 200000,
-    maxOutputTokens: 8192,
+    maxOutputTokens: 64000,
     costPer1kInput: 0.003,
     costPer1kOutput: 0.015,
     capabilities: {
@@ -48,7 +48,7 @@ export const availableModels: ModelConfig[] = [
       functionCalling: true,
       vision: true,
     },
-    tier: 'M',
+    tier: 2,
   },
   {
     id: 'claude-3-5-haiku-20241022',
@@ -56,17 +56,64 @@ export const availableModels: ModelConfig[] = [
     provider: 'anthropic',
     contextWindow: 200000,
     maxOutputTokens: 8192,
-    costPer1kInput: 0.001,
-    costPer1kOutput: 0.005,
+    costPer1kInput: 0.0008,
+    costPer1kOutput: 0.004,
     capabilities: {
       streaming: true,
       functionCalling: true,
       vision: false,
     },
-    tier: 'S',
+    tier: 1,
   },
 
-  // OpenAI models
+  // OpenAI models - GPT-5 series (when available)
+  {
+    id: 'gpt-5',
+    name: 'GPT-5',
+    provider: 'openai',
+    contextWindow: 272000,
+    maxOutputTokens: 128000,
+    costPer1kInput: 0.00125,
+    costPer1kOutput: 0.01,
+    capabilities: {
+      streaming: true,
+      functionCalling: true,
+      vision: true,
+    },
+    tier: 4,
+  },
+  {
+    id: 'gpt-5-mini',
+    name: 'GPT-5 Mini',
+    provider: 'openai',
+    contextWindow: 272000,
+    maxOutputTokens: 128000,
+    costPer1kInput: 0.00025,
+    costPer1kOutput: 0.002,
+    capabilities: {
+      streaming: true,
+      functionCalling: true,
+      vision: true,
+    },
+    tier: 2,
+  },
+  {
+    id: 'gpt-5-nano',
+    name: 'GPT-5 Nano',
+    provider: 'openai',
+    contextWindow: 272000,
+    maxOutputTokens: 128000,
+    costPer1kInput: 0.00005,
+    costPer1kOutput: 0.0004,
+    capabilities: {
+      streaming: true,
+      functionCalling: true,
+      vision: true,
+    },
+    tier: 1,
+  },
+
+  // OpenAI models - Current GPT-4 (keep these as they're still widely used)
   {
     id: 'gpt-4o',
     name: 'GPT-4o',
@@ -80,22 +127,7 @@ export const availableModels: ModelConfig[] = [
       functionCalling: true,
       vision: true,
     },
-    tier: 'M',
-  },
-  {
-    id: 'gpt-4-turbo',
-    name: 'GPT-4 Turbo',
-    provider: 'openai',
-    contextWindow: 128000,
-    maxOutputTokens: 4096,
-    costPer1kInput: 0.01,
-    costPer1kOutput: 0.03,
-    capabilities: {
-      streaming: true,
-      functionCalling: true,
-      vision: true,
-    },
-    tier: 'F',
+    tier: 2,
   },
   {
     id: 'gpt-4o-mini',
@@ -110,39 +142,116 @@ export const availableModels: ModelConfig[] = [
       functionCalling: true,
       vision: true,
     },
-    tier: 'S',
+    tier: 1,
   },
 
-  // Google models
+  // O-series reasoning models (when available)
   {
-    id: 'gemini-1.5-pro',
-    name: 'Gemini 1.5 Pro',
-    provider: 'google',
-    contextWindow: 1000000,
-    maxOutputTokens: 8192,
-    costPer1kInput: 0.0035,
-    costPer1kOutput: 0.014,
+    id: 'o3',
+    name: 'O3',
+    provider: 'openai',
+    contextWindow: 200000,
+    maxOutputTokens: 100000,
+    costPer1kInput: 0.011,
+    costPer1kOutput: 0.044,
     capabilities: {
       streaming: true,
       functionCalling: true,
       vision: true,
     },
-    tier: 'F',
+    tier: 4,
   },
   {
-    id: 'gemini-1.5-flash',
-    name: 'Gemini 1.5 Flash',
-    provider: 'google',
-    contextWindow: 1000000,
-    maxOutputTokens: 8192,
-    costPer1kInput: 0.00035,
-    costPer1kOutput: 0.0014,
+    id: 'o3-mini',
+    name: 'O3-Mini',
+    provider: 'openai',
+    contextWindow: 200000,
+    maxOutputTokens: 100000,
+    costPer1kInput: 0.003,
+    costPer1kOutput: 0.012,
     capabilities: {
       streaming: true,
       functionCalling: true,
       vision: true,
     },
-    tier: 'S',
+    tier: 3,
+  },
+  {
+    id: 'o4-mini',
+    name: 'O4-Mini',
+    provider: 'openai',
+    contextWindow: 200000,
+    maxOutputTokens: 100000,
+    costPer1kInput: 0.0006,
+    costPer1kOutput: 0.0024,
+    capabilities: {
+      streaming: true,
+      functionCalling: true,
+      vision: true,
+    },
+    tier: 3,
+  },
+
+  // Google models - Gemini 2.x series
+  {
+    id: 'gemini-2.5-pro',
+    name: 'Gemini 2.5 Pro',
+    provider: 'google',
+    contextWindow: 1000000,
+    maxOutputTokens: 8192,
+    costPer1kInput: 0.00125,  // $1.25 per M for standard, $4 for long context
+    costPer1kOutput: 0.005,   // $5 per M for standard, $20 for long context
+    capabilities: {
+      streaming: true,
+      functionCalling: true,
+      vision: true,
+    },
+    tier: 4,
+  },
+  {
+    id: 'gemini-2.5-flash',
+    name: 'Gemini 2.5 Flash',
+    provider: 'google',
+    contextWindow: 1000000,
+    maxOutputTokens: 8192,
+    costPer1kInput: 0.000075,
+    costPer1kOutput: 0.0003,
+    capabilities: {
+      streaming: true,
+      functionCalling: true,
+      vision: true,
+    },
+    tier: 2,
+  },
+  {
+    id: 'gemini-2.5-flash-lite',
+    name: 'Gemini 2.5 Flash-Lite',
+    provider: 'google',
+    contextWindow: 1000000,
+    maxOutputTokens: 8192,
+    costPer1kInput: 0.00002,
+    costPer1kOutput: 0.00008,
+    capabilities: {
+      streaming: true,
+      functionCalling: true,
+      vision: false,
+    },
+    tier: 1,
+  },
+  {
+    id: 'gemini-2.0-flash',
+    name: 'Gemini 2.0 Flash',
+    provider: 'google',
+    contextWindow: 1000000,
+    maxOutputTokens: 8192,
+    costPer1kInput: 0.000075,
+    costPer1kOutput: 0.0003,
+    capabilities: {
+      streaming: true,
+      functionCalling: true,
+      vision: true,
+    },
+    tier: 2,
   },
 ];
 
@@ -164,8 +273,8 @@ export function getModelById(modelId: string): ModelConfig | undefined {
 // Get default model for a provider
 export function getDefaultModelForProvider(provider: AIProvider): ModelConfig | undefined {
   const models = getModelsByProvider(provider);
-  // Return the 'M' tier model as default, or the first available
-  return models.find(m => m.tier === 'M') || models[0];
+  // Return the tier 2 (balanced) model as default, or the first available
+  return models.find(m => m.tier === 2) || models[0];
 }
 
 // Model selector interface for user requests
