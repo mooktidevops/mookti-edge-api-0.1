@@ -45,6 +45,13 @@ export async function POST(request: NextRequest) {
           case 'review-trigger':
             console.log(`Processing review trigger for session ${job.payload.sessionId}`);
             break;
+          case 'conversation-embed':
+            console.log(`Processing conversation embeddings for session ${job.payload.sessionId}`);
+            {
+              const mod = await import('../../../lib/jobs/conversation-embed');
+              await mod.processConversationEmbed({ sessionId: job.payload.sessionId, userId: job.payload.userId });
+            }
+            break;
         }
 
         await jobQueue.complete(job.id);

@@ -1,8 +1,15 @@
+/**
+ * @deprecated Legacy orchestrator (v1). Do not use in new code.
+ * Use `src/services/ellen-orchestrator.ts` (V2) instead.
+ */
 import { ToolLoader } from './toolLoader';
 import { ToolRequest, ToolResponse, UserEntitlements, ModelTier, ToolDefinition } from '../types/ellen';
 import { SocraticController } from '../controllers/socraticController';
 import { FormativeController } from '../controllers/formativeController';
 
+/**
+ * @deprecated Legacy orchestrator (v1). Not wired into current APIs.
+ */
 export class Orchestrator {
   private toolLoader: ToolLoader;
   private socraticController: SocraticController;
@@ -11,6 +18,11 @@ export class Orchestrator {
   private loopPath: string[] = [];
 
   constructor() {
+    // Soft deprecation warning to catch accidental usage in dev/test.
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.warn('[DEPRECATED] src/orchestrator/orchestrator.ts is legacy. Use EllenOrchestrator (V2) in src/services/ellen-orchestrator.ts');
+    }
     this.toolLoader = new ToolLoader();
     this.socraticController = new SocraticController();
     this.formativeController = new FormativeController();

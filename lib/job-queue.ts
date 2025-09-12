@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export interface JobData {
   id: string;
-  type: 'growth-compass-update' | 'pattern-detection' | 'milestone-check' | 'review-trigger';
+  type: 'growth-compass-update' | 'pattern-detection' | 'milestone-check' | 'review-trigger' | 'conversation-embed';
   payload: any;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   createdAt: Date;

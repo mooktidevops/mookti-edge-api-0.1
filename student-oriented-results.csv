@@ -1,0 +1,63 @@
+Query,Expected Intent,Expected Depth,Gemini 2.5 Flash Intent,Gemini 2.5 Flash Depth,Gemini 2.5 Flash Lite Intent,Gemini 2.5 Flash Lite Depth,Gemini 2.5 Pro Intent,Gemini 2.5 Pro Depth,GPT-4o Mini Intent,GPT-4o Mini Depth,GPT-4o Intent,GPT-4o Depth,GPT-5 Intent,GPT-5 Depth,Claude 3.5 Haiku Intent,Claude 3.5 Haiku Depth
+"I'm reading Romeo and Juliet for class - what's the main theme?",understand,surface,understand,surface,understand,guided,understand,surface,understand,surface,understand,surface,ERROR,ERROR,understand,surface
+"I need to write an essay about postcolonial themes in Things Fall Apart - can you help me analyze them?",evaluate,deep,understand,guided,create,guided,create,deep,create,guided,understand,guided,ERROR,ERROR,create,guided
+"I'm trying to write a haiku about autumn for my poetry assignment",create,guided,create,guided,create,guided,create,guided,create,guided,create,guided,ERROR,ERROR,create,guided
+"Can you help me understand what caused the French Revolution? I have a test tomorrow",understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,ERROR,ERROR,understand,guided
+"I'm curious about the Renaissance - what was it like?",explore,surface,understand,guided,understand,guided,understand,guided,explore,guided,understand,guided,ERROR,ERROR,explore,guided
+"Compare FDR's New Deal with Reagan's economic policies",evaluate,guided,understand,guided,understand,guided,understand,guided,evaluate,guided,evaluate,guided,ERROR,ERROR,understand,guided
+"I have to present in front of the whole class tomorrow and I'm really anxious",regulate,guided,regulate,guided,regulate,guided,regulate,guided,regulate,guided,regulate,guided,ERROR,ERROR,regulate,guided
+"I'm studying neuroscience - can you explain how addiction affects the brain's reward pathways?",understand,deep,understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,ERROR,ERROR,understand,guided
+"I keep procrastinating on my homework - any quick tips?",solve,surface,regulate,surface,regulate,guided,regulate,surface,regulate,surface,regulate,surface,ERROR,ERROR,regulate,guided
+"I'm working on a business plan for my entrepreneurship class - it's for a coffee shop",organize,guided,create,deep,create,guided,create,deep,create,guided,create,deep,ERROR,ERROR,create,guided
+"My parents want me to invest my summer job savings - are bonds a good idea right now?",evaluate,surface,evaluate,guided,evaluate,guided,evaluate,guided,evaluate,guided,evaluate,guided,ERROR,ERROR,evaluate,guided
+"I don't get supply and demand curves - can you explain with examples?",understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,ERROR,ERROR,understand,guided
+"I'm composing a piece for my music theory class and want to use modal interchange - can we work through it?",create,deep,create,guided,create,guided,create,guided,create,guided,create,deep,ERROR,ERROR,create,guided
+"What's impressionism? I keep hearing about it in art class",understand,surface,understand,surface,understand,guided,understand,surface,understand,surface,understand,guided,ERROR,ERROR,understand,guided
+"I'm interested in trying different pottery glazing techniques for my ceramics project",explore,guided,create,guided,explore,guided,explore,guided,explore,guided,explore,guided,ERROR,ERROR,explore,guided
+"I'm confused about when to use the subjunctive in Spanish - help!",solve,guided,understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,ERROR,ERROR,understand,guided
+"How do I write 'hello, nice to meet you' in Japanese?",create,surface,understand,surface,create,guided,understand,surface,create,surface,understand,surface,ERROR,ERROR,understand,surface
+"For my linguistics paper - how did Latin evolve into the Romance languages?",understand,deep,understand,guided,understand,guided,understand,deep,understand,guided,understand,deep,ERROR,ERROR,understand,guided
+"I've been thinking about free will vs determinism for my philosophy class - let's explore this",explore,deep,explore,deep,explore,deep,explore,deep,explore,deep,explore,deep,ERROR,ERROR,explore,deep
+"Can we discuss the trolley problem? I need to understand it for ethics class",interact,guided,understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,ERROR,ERROR,understand,guided
+"Critique Kant's categorical imperative in modern contexts",evaluate,deep,evaluate,deep,evaluate,guided,evaluate,deep,evaluate,deep,evaluate,deep,ERROR,ERROR,evaluate,deep
+"My grandma has diabetes - what are the main symptoms I should know about?",understand,surface,understand,surface,understand,guided,understand,surface,understand,surface,understand,guided,ERROR,ERROR,understand,guided
+"I need a simple meal prep plan for my dorm room",organize,surface,create,guided,organize,guided,organize,guided,organize,guided,organize,guided,ERROR,ERROR,organize,guided
+"I've been having trouble sleeping since finals started - what can I do?",solve,guided,solve,guided,regulate,guided,regulate,guided,regulate,guided,regulate,guided,ERROR,ERROR,regulate,guided
+"I want to make my apartment more eco-friendly - what renewable energy options exist?",explore,guided,understand,guided,explore,guided,understand,guided,explore,guided,understand,guided,ERROR,ERROR,explore,guided
+"My friend says electric cars aren't actually better for the environment - is that true?",evaluate,surface,understand,surface,evaluate,guided,understand,guided,understand,guided,evaluate,guided,ERROR,ERROR,understand,guided
+"For my climate science project - explain the carbon cycle and ocean acidification",understand,deep,understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,ERROR,ERROR,understand,guided
+"I'm studying for the LSAT - can you explain civil vs criminal law?",understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,ERROR,ERROR,understand,guided
+"My landlord won't return my deposit - what are my rights?",interact,surface,understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,ERROR,ERROR,solve,guided
+"Analyze the constitutionality of government surveillance programs",evaluate,guided,evaluate,deep,evaluate,deep,evaluate,deep,evaluate,deep,evaluate,deep,ERROR,ERROR,evaluate,deep
+"I'm student teaching next semester - help me design a curriculum for teaching critical thinking",organize,deep,create,deep,create,deep,create,deep,create,guided,create,deep,ERROR,ERROR,create,deep
+"The kids in my tutoring group won't pay attention - what should I do?",solve,guided,solve,guided,regulate,guided,solve,guided,regulate,guided,regulate,guided,ERROR,ERROR,regulate,guided
+"I need to create an engaging lesson about photosynthesis for 7th graders",create,guided,create,deep,create,guided,create,guided,create,guided,create,guided,ERROR,ERROR,create,guided
+"What's cultural relativism? It came up in my anthro reading",understand,surface,understand,surface,understand,guided,understand,surface,understand,surface,understand,surface,ERROR,ERROR,understand,guided
+"I'm researching how social media affects teen identity for my sociology thesis",explore,deep,understand,deep,understand,deep,understand,deep,explore,deep,explore,deep,ERROR,ERROR,explore,deep
+"Let's debate nature vs nurture - I need different perspectives for my paper",interact,deep,interact,guided,evaluate,guided,interact,deep,explore,guided,evaluate,deep,ERROR,ERROR,explore,guided
+"How do I find the mean of this dataset: [23, 45, 67, 12, 89, 34]?",solve,surface,solve,surface,solve,guided,solve,surface,solve,surface,solve,surface,ERROR,ERROR,solve,surface
+"I'm stuck on quadratic equations - can you walk me through them?",understand,guided,understand,guided,solve,guided,understand,guided,solve,guided,understand,guided,ERROR,ERROR,understand,guided
+"Help me develop a mathematical model for population growth in my research",create,deep,create,deep,create,deep,create,deep,create,guided,create,deep,ERROR,ERROR,create,deep
+"I have 3 exams tomorrow and I need to focus NOW",regulate,surface,regulate,surface,regulate,guided,regulate,surface,regulate,surface,regulate,guided,ERROR,ERROR,regulate,guided
+"I'm graduating soon and thinking about becoming a teacher - how do I plan this transition?",organize,guided,organize,guided,organize,guided,organize,deep,organize,guided,organize,guided,ERROR,ERROR,organize,guided
+"Everyone in my program seems smarter than me - dealing with major imposter syndrome",regulate,deep,regulate,guided,regulate,guided,regulate,guided,regulate,guided,regulate,guided,ERROR,ERROR,regulate,guided
+"The tomatoes in my dorm garden have yellow leaves - what's wrong?",solve,surface,understand,guided,solve,guided,solve,surface,understand,guided,understand,guided,ERROR,ERROR,understand,surface
+"Plan a crop rotation for my community garden plot",organize,guided,organize,guided,organize,guided,organize,guided,organize,guided,organize,guided,ERROR,ERROR,organize,guided
+"I'm interested in sustainable farming - can we explore permaculture?",explore,guided,explore,deep,explore,guided,explore,deep,explore,guided,explore,guided,ERROR,ERROR,explore,deep
+"I have chicken, rice, and some veggies - what can I make for dinner?",create,surface,create,guided,create,guided,create,surface,create,surface,create,surface,ERROR,ERROR,create,surface
+"My culinary professor mentioned the Maillard reaction - what is it?",understand,guided,understand,surface,understand,guided,understand,surface,understand,surface,understand,guided,ERROR,ERROR,understand,guided
+"My sourdough starter isn't bubbling - how do I fix it?",solve,guided,solve,guided,solve,guided,solve,guided,solve,guided,solve,guided,ERROR,ERROR,solve,guided
+"I only have 15 minutes between classes - need a quick workout",organize,surface,solve,guided,organize,surface,create,guided,explore,surface,organize,surface,ERROR,ERROR,create,surface
+"Can you check my deadlift form? I'll describe what I'm doing",interact,guided,evaluate,guided,evaluate,guided,evaluate,guided,interact,guided,evaluate,guided,ERROR,ERROR,evaluate,guided
+"Review my marathon training plan - first race in 4 months",evaluate,guided,evaluate,deep,evaluate,guided,evaluate,deep,evaluate,guided,evaluate,guided,ERROR,ERROR,evaluate,guided
+"My code has a syntax error on line 42 - help!",solve,surface,solve,guided,solve,guided,solve,surface,solve,surface,solve,guided,ERROR,ERROR,solve,surface
+"I'm learning recursion but it's confusing - can you explain it simply?",understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,ERROR,ERROR,understand,guided
+"I need to design a database schema for my capstone project",create,deep,create,deep,create,guided,create,guided,create,guided,create,deep,ERROR,ERROR,create,guided
+"What's the difference between speed and velocity?",understand,surface,understand,surface,understand,guided,understand,surface,understand,surface,understand,surface,ERROR,ERROR,understand,guided
+"I'm stuck on this thermodynamics problem about heat engines",solve,guided,solve,guided,solve,guided,solve,guided,solve,guided,solve,guided,ERROR,ERROR,solve,guided
+"I'm fascinated by quantum mechanics - let's explore the double-slit experiment",explore,deep,explore,deep,explore,deep,explore,guided,explore,deep,explore,deep,ERROR,ERROR,explore,deep
+
+SUMMARY SCORES,,,
+Intent Accuracy (%),,,68.4,,73.7,,71.9,,75.4,,73.7,,0.0,,71.9,
+Depth Accuracy (%),,,63.2,,52.6,,68.4,,68.4,,71.9,,0.0,,63.2,
+Overall Accuracy (%),,,43.9,,35.1,,49.1,,54.4,,54.4,,0.0,,43.9,

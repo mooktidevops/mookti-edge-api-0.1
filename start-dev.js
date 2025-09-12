@@ -101,6 +101,10 @@ const server = http.createServer(async (req, res) => {
       modulePath = path.join(__dirname, 'api', 'ellen', 'sessions.ts');
     } else {
       switch (pathname) {
+      case '/api/health':
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'ok', service: 'mookti-edge-api', version: 'dev' }));
+        return;
       case '/':
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
@@ -145,6 +149,10 @@ const server = http.createServer(async (req, res) => {
         
       case '/api/storage/messages':
         modulePath = path.join(__dirname, 'api', 'storage', 'messages.ts');
+        break;
+      
+      case '/api/storage/votes':
+        modulePath = path.join(__dirname, 'api', 'storage', 'votes.ts');
         break;
         
       case '/api/storage/search':
@@ -230,14 +238,37 @@ const server = http.createServer(async (req, res) => {
     }
     
     // Stream or send response
-    const responseBody = await response.text();
-    
+    const contentType = response.headers.get('content-type') || '';
+
     // Copy headers
     const headers = {};
     response.headers.forEach((value, key) => {
       headers[key] = value;
     });
-    
+
+    // If SSE, pipe the stream incrementally to the Node response
+    if (contentType.includes('text/event-stream') && response.body) {
+      res.writeHead(response.status, headers);
+      const reader = response.body.getReader();
+      const pump = async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            if (value) res.write(Buffer.from(value));
+          }
+          res.end();
+        } catch (e) {
+          console.error('SSE piping error:', e);
+          try { res.end(); } catch {}
+        }
+      };
+      pump();
+      return;
+    }
+
+    // Non-streaming: read full body then respond
+    const responseBody = await response.text();
     res.writeHead(response.status, headers);
     res.end(responseBody);
     

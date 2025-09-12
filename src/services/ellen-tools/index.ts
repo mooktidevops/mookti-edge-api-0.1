@@ -13,6 +13,13 @@ export * from './strategy-diagnostic-tools';
 export * from './strategy-implementations';
 export * from './study-utilities';
 
+// V2 Tools
+export * from './quick-answer-tool';
+export * from './practical-guide-tool';
+export * from './problem-solver-tool';
+export * from './evaluator-tool';
+export * from './intent-router-tool';
+
 import { EllenToolOrchestrator, ToolContext, ToolResponse } from './core-tools';
 import { CoachingToolsOrchestrator, CoachingContext, CoachingResponse } from './coaching-tools';
 import { PlanningToolsOrchestrator, PlanningContext, StudyPlan } from './planning-tools';
@@ -53,50 +60,23 @@ export class EllenMasterOrchestrator {
   }
 
   /**
-   * Categorize the request to determine which tool set to use
+   * DEPRECATED: Legacy categorization - V2 uses UserStateMonitor and IntentRouter
+   * 
+   * This method is only called when no specific tool is provided, which shouldn't 
+   * happen with V2 orchestration. The sophisticated LLM-based routing in 
+   * UserStateMonitor and IntentRouter handles tool selection much more accurately.
+   * 
+   * @deprecated Use UserStateMonitor.selectToolFromState() instead
    */
   private categorizeRequest(
     message: string, 
     context?: Partial<ToolContext & CoachingContext & PlanningContext & DiagnosticContext & StrategyContext & StudyContext>
   ): 'core' | 'coaching' | 'planning' | 'diagnostic' | 'strategy' | 'utility' {
-    const lowerMessage = message.toLowerCase();
-
-    // Diagnostic indicators (problems, struggles)
-    if (lowerMessage.includes('problem') || lowerMessage.includes('struggling') ||
-        lowerMessage.includes('difficulty') || lowerMessage.includes('can\'t') ||
-        lowerMessage.includes('forget') || lowerMessage.includes('anxiety')) {
-      return 'diagnostic';
-    }
-
-    // Planning indicators (schedule, plan, WOOP, focus session)
-    if (lowerMessage.includes('plan') || lowerMessage.includes('schedule') ||
-        lowerMessage.includes('woop') || lowerMessage.includes('pomodoro') ||
-        lowerMessage.includes('focus') || lowerMessage.includes('session')) {
-      return 'planning';
-    }
-
-    // Coaching indicators (writing, notes, email, office hours)
-    if (lowerMessage.includes('write') || lowerMessage.includes('essay') ||
-        lowerMessage.includes('email') || lowerMessage.includes('note') ||
-        lowerMessage.includes('office hour') || lowerMessage.includes('professor')) {
-      return 'coaching';
-    }
-
-    // Strategy indicators (retrieval, self-explanation, dual coding)
-    if (lowerMessage.includes('retrieval') || lowerMessage.includes('practice') ||
-        lowerMessage.includes('self-explain') || lowerMessage.includes('dual cod') ||
-        lowerMessage.includes('desirable difficult')) {
-      return 'strategy';
-    }
-
-    // Study utility indicators (flashcard, concept map, example, analogy)
-    if (lowerMessage.includes('flashcard') || lowerMessage.includes('concept map') ||
-        lowerMessage.includes('worked example') || lowerMessage.includes('analogy') ||
-        lowerMessage.includes('memorize')) {
-      return 'utility';
-    }
-
-    // Core pedagogical (default for learning questions)
+    // V2: This should rarely be called as tools are selected upstream
+    // Default to 'core' and let the orchestrator handle proper routing
+    console.warn('[EllenTools] categorizeRequest called without specific tool - this indicates V2 routing may not be working properly');
+    
+    // Simple fallback - no regex needed since V2 handles this better
     return 'core';
   }
 
@@ -279,6 +259,13 @@ export const ELLEN_TOOLS = {
   REFLECTION: 'reflection',
   EXTENSION: 'extension',
   GENEALOGY: 'genealogy',
+  
+  // V2 Intent-Based Tools
+  QUICK_ANSWER: 'quick_answer',
+  PRACTICAL_GUIDE: 'practical_guide',
+  PROBLEM_SOLVER: 'problem_solver',
+  EVALUATOR: 'evaluator_tool',
+  INTENT_ROUTER: 'intent_router',
   
   // Coaching
   WRITING_COACH: 'writing_coach',

@@ -1,0 +1,30 @@
+Query,Expected Intent,Expected Depth,Gemini 2.5 Flash Intent,Gemini 2.5 Flash Depth,Gemini 2.5 Pro Intent,Gemini 2.5 Pro Depth,o4-mini Intent,o4-mini Depth,GPT-5-mini Intent,GPT-5-mini Depth,GPT-5 Intent,GPT-5 Depth,Claude Haiku 3.5 Intent,Claude Haiku 3.5 Depth
+"What is machine learning?",understand,surface,understand,surface,understand,surface,understand,surface,understand,surface,understand,surface,understand,guided
+"Can you explain how neural networks work step by step?",understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,understand,guided,understand,guided
+"I want to understand the mathematical foundations of backpropagation in deep learning",understand,deep,ERROR,deep,understand,deep,understand,deep,ERROR,deep,understand,deep,understand,deep
+"Help me write a quick thank you email",create,surface,create,surface,create,surface,create,surface,create,surface,create,surface,create,surface
+"I need to design a REST API for my project",create,guided,create,guided,create,deep,create,guided,create,guided,create,guided,create,guided
+"Let's create a comprehensive system architecture for a distributed application",create,deep,create,deep,create,deep,create,deep,create,deep,create,deep,create,deep
+"How do I fix this syntax error?",solve,surface,solve,guided,solve,surface,solve,surface,solve,guided,solve,surface,solve,surface
+"Help me debug this sorting algorithm that's not working correctly",solve,guided,solve,guided,solve,guided,solve,guided,ERROR,guided,solve,guided,solve,guided
+"I need to solve this complex optimization problem with multiple constraints",solve,deep,solve,deep,solve,deep,solve,deep,solve,deep,solve,deep,solve,deep
+"Is MongoDB a good choice?",evaluate,surface,evaluate,surface,evaluate,guided,evaluate,surface,ERROR,surface,evaluate,surface,evaluate,guided
+"Review my code and suggest improvements",evaluate,guided,evaluate,guided,evaluate,guided,evaluate,guided,ERROR,guided,evaluate,guided,evaluate,guided
+"Critically analyze this system design for scalability and security",evaluate,deep,evaluate,deep,evaluate,deep,evaluate,deep,evaluate,deep,evaluate,deep,evaluate,deep
+"I need a quick study plan for tomorrow",organize,surface,organize,surface,organize,surface,organize,surface,organize,surface,organize,surface,organize,surface
+"Help me plan my learning path for web development",organize,guided,organize,deep,organize,guided,organize,guided,organize,guided,organize,guided,organize,guided
+"Create a comprehensive project timeline with milestones and dependencies",organize,deep,create,guided,create,deep,create,guided,ERROR,ERROR,create,deep,create,deep
+"I need to focus for 30 minutes",regulate,surface,regulate,guided,regulate,deep,regulate,surface,ERROR,ERROR,regulate,surface,regulate,surface
+"I'm feeling overwhelmed with this project",regulate,guided,regulate,guided,regulate,guided,regulate,surface,ERROR,ERROR,regulate,guided,regulate,guided
+"I keep hitting mental blocks and need strategies to breakthrough",regulate,deep,ERROR,guided,regulate,guided,regulate,guided,ERROR,ERROR,regulate,guided,regulate,guided
+"What's the history of AI?",explore,surface,understand,guided,understand,guided,understand,guided,ERROR,ERROR,understand,surface,understand,guided
+"Let me explore different approaches to solving this problem",explore,guided,explore,deep,explore,deep,explore,guided,ERROR,ERROR,explore,guided,explore,guided
+"I want to investigate the theoretical implications of quantum computing",explore,deep,explore,deep,explore,deep,explore,deep,ERROR,ERROR,explore,deep,explore,deep
+"Can we discuss this briefly?",interact,surface,interact,surface,interact,surface,interact,surface,ERROR,ERROR,interact,surface,interact,surface
+"Let's work through this problem together step by step",interact,guided,solve,guided,solve,guided,solve,guided,ERROR,ERROR,solve,guided,solve,guided
+"I want to debate the pros and cons of different architectural patterns",interact,deep,ERROR,guided,interact,deep,evaluate,guided,ERROR,ERROR,interact,deep,explore,deep
+
+SUMMARY SCORES,,,,,,,,,,,,,
+Intent Accuracy (%),,,75.0,,87.5,,83.3,,45.8,,83.3,,87.5,
+Depth Accuracy (%),,,66.7,,75.0,,79.2,,79.2,,83.3,,70.8,
+Overall Accuracy (%),,,58.3,,66.7,,75.0,,37.5,,79.2,,62.5,

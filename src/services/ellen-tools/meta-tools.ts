@@ -251,7 +251,7 @@ export async function analyzeStudentSentiment(
   message: string,
   conversationHistory?: Array<{ role: string; content: string }>
 ): Promise<{
-  frustrationLevel: number; // 0-10 scale
+  frustrationLevel: number; // 0-1 scale
   needsToolSwitch: boolean;
   suggestedTool?: string;
   sentimentType: 'positive' | 'neutral' | 'confused' | 'frustrated' | 'disengaged';
@@ -286,7 +286,7 @@ Look for subtle cues like:
 
 Return a JSON object with:
 {
-  "frustrationLevel": 0-10 (0=none, 10=very frustrated),
+  "frustrationLevel": 0-1 (0.0=none, 1.0=very frustrated),
   "needsToolSwitch": boolean,
   "suggestedTool": "tool_name or null",
   "sentimentType": "positive|neutral|confused|frustrated|disengaged",
@@ -317,7 +317,7 @@ Return a JSON object with:
   } catch {
     // Fallback to keyword-based detection
     return {
-      frustrationLevel: detectFrustrationKeywords(message) ? 5 : 0,
+      frustrationLevel: detectFrustrationKeywords(message) ? 0.5 : 0,
       needsToolSwitch: detectToolSwitchKeywords(message),
       sentimentType: 'neutral',
       confidence: 0.3
@@ -339,7 +339,7 @@ function quickFrustrationCheck(message: string): {
     return {
       isObvious: true,
       result: {
-        frustrationLevel: 8,
+        frustrationLevel: 0.8,
         needsToolSwitch: true,
         sentimentType: 'frustrated',
         confidence: 0.9
@@ -352,7 +352,7 @@ function quickFrustrationCheck(message: string): {
     return {
       isObvious: true,
       result: {
-        frustrationLevel: 6,
+        frustrationLevel: 0.6,
         needsToolSwitch: true,
         sentimentType: 'confused',
         confidence: 0.85
@@ -365,7 +365,7 @@ function quickFrustrationCheck(message: string): {
     return {
       isObvious: true,
       result: {
-        frustrationLevel: 4,
+        frustrationLevel: 0.4,
         needsToolSwitch: true,
         suggestedTool: 'explanation_tool',
         sentimentType: 'frustrated',

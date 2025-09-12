@@ -1,11 +1,13 @@
 /**
  * Model Selection Service
  * Implements intelligent model routing based on our 4-tier system
+ * Now uses centralized feature flags for configuration
  */
 
 import { routeToModel, ModelRoutingResult } from '../../lib/ai/model-router';
 import { ModelTier, getTierConfig, FRONTIER_MODELS } from '../config/model-tiers';
 import { getToolConfig } from '../config/tool-config';
+import { getFeatureFlags, getModelString, getModelCost } from '../config/feature-flags';
 
 export interface ModelSelectionContext {
   tool?: string;
@@ -97,27 +99,40 @@ export class ModelSelectionService {
    * Select a specific model for a given tier
    */
   private selectModelForTier(tier: ModelTier, context: ModelSelectionContext): ModelRoutingResult {
+    const flags = getFeatureFlags();
     const tierConfig = getTierConfig(tier);
     
     // Special handling for large contexts
     if (context.tokenCount && context.tokenCount > 50000) {
       // Use Gemini models for their 1M token context
-      const largeContextModel = tier <= 2 ? 'gemini-2.5-flash' : 'gemini-2.5-pro';
+      const largeContextModel = tier <= 2 ? 
+        getModelString(flags.tierModels.tier2) : 
+        getModelString(flags.tierModels.tier4);
       console.log(`[ModelSelection] Large context (${context.tokenCount} tokens) → ${largeContextModel}`);
       return routeToModel({ modelId: largeContextModel });
     }
 
-    // Map our tier system to actual model IDs
-    const modelMapping: Record<ModelTier, string> = {
-      1: 'gemini-2.5-flash-lite',  // Simple/Fast ($0.02/$0.08 per M)
-      2: 'gemini-2.5-flash',        // Balanced ($0.075/$0.30 per M)
-      3: 'o4-mini',                 // Complex & Diagnostics ($0.60/$2.40 per M)
-      4: 'gemini-2.5-pro'           // Frontier default ($1.25/$5 per M)
-    };
+    // Get model from feature flags based on tier
+    const tierModelConfig = {
+      1: flags.tierModels.tier1,
+      2: flags.tierModels.tier2,
+      3: flags.tierModels.tier3,
+      4: flags.tierModels.tier4
+    }[tier];
 
-    const selectedModel = modelMapping[tier];
+    const selectedModel = getModelString(tierModelConfig);
     console.log(`[ModelSelection] Tier ${tier} mapped to model: ${selectedModel}`);
     console.log(`[ModelSelection] Cost profile: ${tierConfig.description}`);
+    
+    // Log cost if tracking is enabled
+    if (flags.monitoring.enableCostTracking && context.tokenCount) {
+      const estimatedCost = getModelCost(
+        selectedModel,
+        context.tokenCount || 1000,
+        500 // Estimated output
+      );
+      console.log(`[ModelSelection] Estimated cost: $${estimatedCost.toFixed(6)}`);
+    }
 
     // Try primary model first
     try {
@@ -141,11 +156,14 @@ export class ModelSelectionService {
    * Select fallback model for a tier
    */
   private selectFallbackModel(tier: ModelTier): ModelRoutingResult {
+    const flags = getFeatureFlags();
+    
+    // Use feature flags for fallback models
     const fallbackMapping: Record<ModelTier, string> = {
-      1: 'gpt-5-nano',                    // Fallback for Simple/Fast
-      2: 'gpt-5-mini',                    // Fallback for Balanced
-      3: 'gemini-2.5-pro',                // Fallback for Complex
-      4: 'claude-opus-4-20250514'         // Fallback for Frontier
+      1: 'gpt-4o-mini',                   // Fallback for Simple/Fast
+      2: 'gpt-4o-mini',                   // Fallback for Balanced
+      3: getModelString(flags.tierModels.tier4), // Use tier4 as fallback for Complex
+      4: 'claude-3-5-sonnet-20241022'    // Fallback for Frontier
     };
 
     return routeToModel({ modelId: fallbackMapping[tier] });
@@ -159,14 +177,18 @@ export class ModelSelectionService {
     inputTokens: number,
     outputTokens: number
   ): number {
-    const tierConfig = getTierConfig(tier);
-    const costPerMillion = tierConfig.maxCostPerMillion;
+    const flags = getFeatureFlags();
     
-    // Rough estimate based on tier max costs
-    const inputCost = (inputTokens / 1000000) * (costPerMillion * 0.2); // Input usually cheaper
-    const outputCost = (outputTokens / 1000000) * (costPerMillion * 0.8); // Output more expensive
+    // Get the actual model for this tier from feature flags
+    const tierModelConfig = {
+      1: flags.tierModels.tier1,
+      2: flags.tierModels.tier2,
+      3: flags.tierModels.tier3,
+      4: flags.tierModels.tier4
+    }[tier];
     
-    return inputCost + outputCost;
+    const modelId = getModelString(tierModelConfig);
+    return getModelCost(modelId, inputTokens, outputTokens);
   }
 
   /**

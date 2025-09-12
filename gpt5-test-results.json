@@ -1,0 +1,1026 @@
+{
+  "model": "GPT-5",
+  "results": [
+    {
+      "query": "I'm reading Romeo and Juliet for class - what's the main theme?",
+      "expected": {
+        "intent": "understand",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [],
+        "depth": "surface",
+        "confidence": 0.94
+      },
+      "intentScore": 1,
+      "depthScore": 0,
+      "overallScore": 0
+    },
+    {
+      "query": "I need to write an essay about postcolonial themes in Things Fall Apart - can you help me analyze them?",
+      "expected": {
+        "intent": "evaluate",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [
+          "create"
+        ],
+        "depth": "guided",
+        "confidence": 0.86
+      },
+      "intentScore": 0,
+      "depthScore": 1,
+      "overallScore": 0
+    },
+    {
+      "query": "I'm trying to write a haiku about autumn for my poetry assignment",
+      "expected": {
+        "intent": "create",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "create",
+        "secondaryIntents": [
+          "understand"
+        ],
+        "depth": "guided",
+        "confidence": 0.91
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "Can you help me understand what caused the French Revolution? I have a test tomorrow",
+      "expected": {
+        "intent": "understand",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [],
+        "depth": "guided",
+        "confidence": 0.93
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I'm curious about the Renaissance - what was it like?",
+      "expected": {
+        "intent": "explore",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [
+          "explore"
+        ],
+        "depth": "surface",
+        "confidence": 0.9
+      },
+      "intentScore": 0.5,
+      "depthScore": 0,
+      "overallScore": 0
+    },
+    {
+      "query": "Compare FDR's New Deal with Reagan's economic policies",
+      "expected": {
+        "intent": "understand",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [
+          "evaluate"
+        ],
+        "depth": "guided",
+        "confidence": 0.87
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I have to present in front of the whole class tomorrow and I'm really anxious",
+      "expected": {
+        "intent": "regulate",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "regulate",
+        "secondaryIntents": [
+          "understand",
+          "organize"
+        ],
+        "depth": "guided",
+        "confidence": 0.9
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I'm studying neuroscience - can you explain how addiction affects the brain's reward pathways?",
+      "expected": {
+        "intent": "understand",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [],
+        "depth": "guided",
+        "confidence": 0.94
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I keep procrastinating on my homework - any quick tips?",
+      "expected": {
+        "intent": "regulate",
+        "depth": "surface"
+      },
+      "result": {
+        "primaryIntent": "regulate",
+        "secondaryIntents": [
+          "organize"
+        ],
+        "depth": "surface",
+        "confidence": 0.87
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I'm working on a business plan for my entrepreneurship class - it's for a coffee shop",
+      "expected": {
+        "intent": "create",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "create",
+        "secondaryIntents": [
+          "organize",
+          "understand"
+        ],
+        "depth": "deep",
+        "confidence": 0.74
+      },
+      "intentScore": 1,
+      "depthScore": 0,
+      "overallScore": 0
+    },
+    {
+      "query": "My parents want me to invest my summer job savings - are bonds a good idea right now?",
+      "expected": {
+        "intent": "evaluate",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "evaluate",
+        "secondaryIntents": [
+          "understand",
+          "organize"
+        ],
+        "depth": "guided",
+        "confidence": 0.86
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I don't get supply and demand curves - can you explain with examples?",
+      "expected": {
+        "intent": "understand",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [],
+        "depth": "guided",
+        "confidence": 0.9
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I'm composing a piece for my music theory class and want to use modal interchange - can we work through it?",
+      "expected": {
+        "intent": "create",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "create",
+        "secondaryIntents": [
+          "understand",
+          "interact"
+        ],
+        "depth": "deep",
+        "confidence": 0.88
+      },
+      "intentScore": 1,
+      "depthScore": 0,
+      "overallScore": 0
+    },
+    {
+      "query": "What's impressionism? I keep hearing about it in art class",
+      "expected": {
+        "intent": "understand",
+        "depth": "surface"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [],
+        "depth": "surface",
+        "confidence": 0.96
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I'm interested in trying different pottery glazing techniques for my ceramics project",
+      "expected": {
+        "intent": "explore",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "explore",
+        "secondaryIntents": [
+          "understand",
+          "create"
+        ],
+        "depth": "guided",
+        "confidence": 0.76
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I'm confused about when to use the subjunctive in Spanish - help!",
+      "expected": {
+        "intent": "understand",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [],
+        "depth": "guided",
+        "confidence": 0.9
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "How do I write 'hello, nice to meet you' in Japanese?",
+      "expected": {
+        "intent": "understand",
+        "depth": "surface"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [
+          "create"
+        ],
+        "depth": "surface",
+        "confidence": 0.98
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "For my linguistics paper - how did Latin evolve into the Romance languages?",
+      "expected": {
+        "intent": "understand",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [
+          "create",
+          "explore"
+        ],
+        "depth": "deep",
+        "confidence": 0.9
+      },
+      "intentScore": 1,
+      "depthScore": 0,
+      "overallScore": 0
+    },
+    {
+      "query": "I've been thinking about free will vs determinism for my philosophy class - let's explore this",
+      "expected": {
+        "intent": "explore",
+        "depth": "deep"
+      },
+      "result": {
+        "primaryIntent": "explore",
+        "secondaryIntents": [
+          "understand",
+          "interact"
+        ],
+        "depth": "deep",
+        "confidence": 0.87
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "Can we discuss the trolley problem? I need to understand it for ethics class",
+      "expected": {
+        "intent": "understand",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [
+          "interact",
+          "explore"
+        ],
+        "depth": "guided",
+        "confidence": 0.9
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "Critique Kant's categorical imperative in modern contexts",
+      "expected": {
+        "intent": "evaluate",
+        "depth": "deep"
+      },
+      "result": {
+        "primaryIntent": "evaluate",
+        "secondaryIntents": [
+          "understand",
+          "create",
+          "explore"
+        ],
+        "depth": "guided",
+        "confidence": 0.86
+      },
+      "intentScore": 1,
+      "depthScore": 0,
+      "overallScore": 0
+    },
+    {
+      "query": "My grandma has diabetes - what are the main symptoms I should know about?",
+      "expected": {
+        "intent": "understand",
+        "depth": "surface"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [],
+        "depth": "surface",
+        "confidence": 0.92
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I need a simple meal prep plan for my dorm room",
+      "expected": {
+        "intent": "organize",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "create",
+        "secondaryIntents": [
+          "organize",
+          "Understand"
+        ],
+        "depth": "guided",
+        "confidence": 0.87
+      },
+      "intentScore": 0.5,
+      "depthScore": 1,
+      "overallScore": 0.5
+    },
+    {
+      "query": "I've been having trouble sleeping since finals started - what can I do?",
+      "expected": {
+        "intent": "regulate",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "regulate",
+        "secondaryIntents": [
+          "understand",
+          "organize"
+        ],
+        "depth": "guided",
+        "confidence": 0.86
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I want to make my apartment more eco-friendly - what renewable energy options exist?",
+      "expected": {
+        "intent": "explore",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [
+          "evaluate"
+        ],
+        "depth": "guided",
+        "confidence": 0.9
+      },
+      "intentScore": 0,
+      "depthScore": 1,
+      "overallScore": 0
+    },
+    {
+      "query": "For my climate science project - explain the carbon cycle and ocean acidification",
+      "expected": {
+        "intent": "understand",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [],
+        "depth": "guided",
+        "confidence": 0.93
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I'm studying for the LSAT - can you explain civil vs criminal law?",
+      "expected": {
+        "intent": "understand",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [],
+        "depth": "guided",
+        "confidence": 0.9
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "My landlord won't return my deposit - what are my rights?",
+      "expected": {
+        "intent": "understand",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [
+          "solve"
+        ],
+        "depth": "guided",
+        "confidence": 0.78
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "Analyze the constitutionality of government surveillance programs",
+      "expected": {
+        "intent": "evaluate",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "evaluate",
+        "secondaryIntents": [
+          "understand",
+          "explore"
+        ],
+        "depth": "deep",
+        "confidence": 0.86
+      },
+      "intentScore": 1,
+      "depthScore": 0,
+      "overallScore": 0
+    },
+    {
+      "query": "I'm student teaching next semester - help me design a curriculum for teaching critical thinking",
+      "expected": {
+        "intent": "create",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "create",
+        "secondaryIntents": [
+          "organize",
+          "understand",
+          "evaluate"
+        ],
+        "depth": "deep",
+        "confidence": 0.9
+      },
+      "intentScore": 1,
+      "depthScore": 0,
+      "overallScore": 0
+    },
+    {
+      "query": "The kids in my tutoring group won't pay attention - what should I do?",
+      "expected": {
+        "intent": "regulate",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "solve",
+        "secondaryIntents": [
+          "organize",
+          "understand",
+          "regulate",
+          "interact"
+        ],
+        "depth": "guided",
+        "confidence": 0.78
+      },
+      "intentScore": 0.5,
+      "depthScore": 1,
+      "overallScore": 0.5
+    },
+    {
+      "query": "I need to create an engaging lesson about photosynthesis for 7th graders",
+      "expected": {
+        "intent": "create",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "create",
+        "secondaryIntents": [
+          "organize",
+          "understand"
+        ],
+        "depth": "guided",
+        "confidence": 0.88
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "What's cultural relativism? It came up in my anthro reading",
+      "expected": {
+        "intent": "understand",
+        "depth": "surface"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [],
+        "depth": "surface",
+        "confidence": 0.93
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I'm researching how social media affects teen identity for my sociology thesis",
+      "expected": {
+        "intent": "explore",
+        "depth": "deep"
+      },
+      "result": {
+        "primaryIntent": "explore",
+        "secondaryIntents": [
+          "understand",
+          "evaluate",
+          "organize"
+        ],
+        "depth": "deep",
+        "confidence": 0.86
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "Let's debate nature vs nurture - I need different perspectives for my paper",
+      "expected": {
+        "intent": "interact",
+        "depth": "deep"
+      },
+      "result": {
+        "primaryIntent": "explore",
+        "secondaryIntents": [
+          "understand",
+          "create",
+          "evaluate"
+        ],
+        "depth": "guided",
+        "confidence": 0.76
+      },
+      "intentScore": 0,
+      "depthScore": 0,
+      "overallScore": 0
+    },
+    {
+      "query": "How do I find the mean of this dataset: [23, 45, 67, 12, 89, 34]?",
+      "expected": {
+        "intent": "solve",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [
+          "solve"
+        ],
+        "depth": "surface",
+        "confidence": 0.98
+      },
+      "intentScore": 0.5,
+      "depthScore": 0,
+      "overallScore": 0
+    },
+    {
+      "query": "I'm stuck on quadratic equations - can you walk me through them?",
+      "expected": {
+        "intent": "understand",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [
+          "solve"
+        ],
+        "depth": "guided",
+        "confidence": 0.9
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "Help me develop a mathematical model for population growth in my research",
+      "expected": {
+        "intent": "create",
+        "depth": "deep"
+      },
+      "result": {
+        "primaryIntent": "create",
+        "secondaryIntents": [
+          "understand",
+          "evaluate"
+        ],
+        "depth": "deep",
+        "confidence": 0.86
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I have 3 exams tomorrow and I need to focus NOW",
+      "expected": {
+        "intent": "regulate",
+        "depth": "surface"
+      },
+      "result": {
+        "primaryIntent": "regulate",
+        "secondaryIntents": [
+          "organize"
+        ],
+        "depth": "surface",
+        "confidence": 0.9
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I'm graduating soon and thinking about becoming a teacher - how do I plan this transition?",
+      "expected": {
+        "intent": "organize",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "organize",
+        "secondaryIntents": [
+          "understand",
+          "evaluate"
+        ],
+        "depth": "guided",
+        "confidence": 0.82
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "Everyone in my program seems smarter than me - dealing with major imposter syndrome",
+      "expected": {
+        "intent": "regulate",
+        "depth": "deep"
+      },
+      "result": {
+        "primaryIntent": "regulate",
+        "secondaryIntents": [
+          "understand",
+          "interact"
+        ],
+        "depth": "guided",
+        "confidence": 0.88
+      },
+      "intentScore": 1,
+      "depthScore": 0,
+      "overallScore": 0
+    },
+    {
+      "query": "The tomatoes in my dorm garden have yellow leaves - what's wrong?",
+      "expected": {
+        "intent": "solve",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [
+          "solve"
+        ],
+        "depth": "guided",
+        "confidence": 0.78
+      },
+      "intentScore": 0.5,
+      "depthScore": 1,
+      "overallScore": 0.5
+    },
+    {
+      "query": "Plan a crop rotation for my community garden plot",
+      "expected": {
+        "intent": "organize",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "organize",
+        "secondaryIntents": [
+          "create",
+          "understand"
+        ],
+        "depth": "guided",
+        "confidence": 0.78
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I'm interested in sustainable farming - can we explore permaculture?",
+      "expected": {
+        "intent": "explore",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "explore",
+        "secondaryIntents": [
+          "understand",
+          "interact"
+        ],
+        "depth": "guided",
+        "confidence": 0.86
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I have chicken, rice, and some veggies - what can I make for dinner?",
+      "expected": {
+        "intent": "create",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "create",
+        "secondaryIntents": [
+          "explore"
+        ],
+        "depth": "surface",
+        "confidence": 0.9
+      },
+      "intentScore": 1,
+      "depthScore": 0,
+      "overallScore": 0
+    },
+    {
+      "query": "My culinary professor mentioned the Maillard reaction - what is it?",
+      "expected": {
+        "intent": "understand",
+        "depth": "surface"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [],
+        "depth": "surface",
+        "confidence": 0.95
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "My sourdough starter isn't bubbling - how do I fix it?",
+      "expected": {
+        "intent": "solve",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "solve",
+        "secondaryIntents": [
+          "understand"
+        ],
+        "depth": "guided",
+        "confidence": 0.86
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I only have 15 minutes between classes - need a quick workout",
+      "expected": {
+        "intent": "organize",
+        "depth": "surface"
+      },
+      "result": {
+        "primaryIntent": "organize",
+        "secondaryIntents": [
+          "create",
+          "regulate"
+        ],
+        "depth": "surface",
+        "confidence": 0.9
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "Can you check my deadlift form? I'll describe what I'm doing",
+      "expected": {
+        "intent": "understand",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "evaluate",
+        "secondaryIntents": [
+          "interact",
+          "understand"
+        ],
+        "depth": "guided",
+        "confidence": 0.78
+      },
+      "intentScore": 0.5,
+      "depthScore": 1,
+      "overallScore": 0.5
+    },
+    {
+      "query": "Review my marathon training plan - first race in 4 months",
+      "expected": {
+        "intent": "evaluate",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "evaluate",
+        "secondaryIntents": [
+          "organize",
+          "understand"
+        ],
+        "depth": "guided",
+        "confidence": 0.78
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "My code has a syntax error on line 42 - help!",
+      "expected": {
+        "intent": "solve",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "solve",
+        "secondaryIntents": [
+          "understand",
+          "interact"
+        ],
+        "depth": "guided",
+        "confidence": 0.56
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I'm learning recursion but it's confusing - can you explain it simply?",
+      "expected": {
+        "intent": "understand",
+        "depth": "surface"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [],
+        "depth": "guided",
+        "confidence": 0.9
+      },
+      "intentScore": 1,
+      "depthScore": 0,
+      "overallScore": 0
+    },
+    {
+      "query": "I need to design a database schema for my capstone project",
+      "expected": {
+        "intent": "create",
+        "depth": "deep"
+      },
+      "result": {
+        "primaryIntent": "create",
+        "secondaryIntents": [
+          "organize",
+          "understand"
+        ],
+        "depth": "deep",
+        "confidence": 0.84
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "What's the difference between speed and velocity?",
+      "expected": {
+        "intent": "understand",
+        "depth": "surface"
+      },
+      "result": {
+        "primaryIntent": "understand",
+        "secondaryIntents": [],
+        "depth": "surface",
+        "confidence": 0.98
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I'm stuck on this thermodynamics problem about heat engines",
+      "expected": {
+        "intent": "solve",
+        "depth": "guided"
+      },
+      "result": {
+        "primaryIntent": "solve",
+        "secondaryIntents": [
+          "understand"
+        ],
+        "depth": "guided",
+        "confidence": 0.68
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    },
+    {
+      "query": "I'm fascinated by quantum mechanics - let's explore the double-slit experiment",
+      "expected": {
+        "intent": "explore",
+        "depth": "deep"
+      },
+      "result": {
+        "primaryIntent": "explore",
+        "secondaryIntents": [
+          "understand"
+        ],
+        "depth": "deep",
+        "confidence": 0.87
+      },
+      "intentScore": 1,
+      "depthScore": 1,
+      "overallScore": 1
+    }
+  ],
+  "scores": {
+    "intent": "87.7",
+    "depth": "75.4",
+    "overall": "66.2",
+    "errors": 1
+  }
+}

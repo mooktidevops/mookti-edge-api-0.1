@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+// Force TypeScript source to avoid stale compiled JS shadowing
 import { EllenOrchestrator } from '../../src/services/ellen-orchestrator';
 import type { EllenStreamRequest } from '../../lib/types/api-types';
+import { getDevModeConfig } from '../../lib/config/dev-mode';
 
 export const runtime = 'edge';
 
@@ -23,6 +25,7 @@ export async function POST(request: NextRequest) {
     // Process in background
     (async () => {
       try {
+        console.log('[EllenStream] Initializing TS orchestrator');
         const orchestrator = new EllenOrchestrator();
         
         // Send initial thinking message
@@ -52,16 +55,20 @@ export async function POST(request: NextRequest) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
 
-        // Send metadata
-        await writer.write(
-          encoder.encode(`data: ${JSON.stringify({ 
-            type: 'metadata',
-            toolsUsed: response.toolsUsed,
-            citations: response.citations,
-            suggestedFollowUp: response.suggestedFollowUp,
-            growthMetrics: response.growthMetrics
-          })}\n\n`)
-        );
+        // Send metadata (always), and dev-only flow trace
+        const dev = getDevModeConfig();
+        const metaPayload: any = {
+          type: 'metadata',
+          toolsUsed: response.toolsUsed,
+          citations: response.citations,
+          suggestedFollowUp: response.suggestedFollowUp,
+          growthMetrics: response.growthMetrics,
+          model: (response as any).model,
+        };
+        if (dev.enabled && (response as any).debugTrace) {
+          metaPayload.flowTrace = (response as any).debugTrace;
+        }
+        await writer.write(encoder.encode(`data: ${JSON.stringify(metaPayload)}\n\n`));
 
         // Send completion signal
         await writer.write(

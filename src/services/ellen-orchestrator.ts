@@ -15,6 +15,9 @@ import { ContextManager } from './context-manager';
 import { modelSelection } from './model-selection';
 import { queryOptimizer } from './query-optimizer';
 import { topicRegistry } from './topic-interest-registry';
+import { UserStateMonitor, type UserState } from './user-state-monitor';
+import { StateAwareMultiToolOrchestrator, MultiToolOptimizer } from './multi-tool-orchestrator';
+import { IntentRouterTool } from './intent-router-tool';
 
 export interface EllenRequest {
   message: string;
@@ -27,7 +30,6 @@ export interface EllenRequest {
     sessionType?: SessionType;
     sessionGoal?: SessionGoal;
   };
-  queryType?: string;
   toolOverride?: string;
   modelPreference?: string; // 'auto' or specific model ID
 }
@@ -42,25 +44,67 @@ export interface EllenResponse {
     reflectionPrompt?: string;
   };
   sessionId?: string;
+  // Dev/observability
+  model?: string;
+  debugTrace?: any;
 }
 
 // Model tier configuration moved to ../config/model-tiers.ts
 // Using new 1/2/3/4 tier system
 
 export class EllenOrchestrator {
-  private pinecone: Pinecone;
+  private pinecone: Pinecone | null = null;
+  private pineconeAvailable: boolean = false;
+  private voyageAvailable: boolean = false;
   private toolRegistry = toolRegistry;
   private sessionStorage: EllenSessionStorage;
   private contextManager: ContextManager;
+  private stateMonitor: UserStateMonitor;
+  private multiToolOrchestrator: StateAwareMultiToolOrchestrator;
+  private multiToolOptimizer: MultiToolOptimizer;
+  private intentRouter: IntentRouterTool;
   private queryOptimizationHints: any = {};
+  private currentTool: string = 'socratic_tool';
+  private currentRequest: EllenRequest | null = null;
+  private previousState: UserState | undefined;
 
   constructor() {
-    this.pinecone = new Pinecone({
-      apiKey: process.env.PINECONE_API_KEY!,
-    });
+    const apiKey = process.env.PINECONE_API_KEY;
+    if (apiKey && apiKey !== 'YOUR_PINECONE_API_KEY_HERE') {
+      try {
+        this.pinecone = new Pinecone({ apiKey });
+        this.pineconeAvailable = true;
+      } catch (e) {
+        console.warn('[Ellen] Pinecone unavailable, skipping retrieval:', (e as any)?.message || e);
+        this.pinecone = null;
+        this.pineconeAvailable = false;
+      }
+    } else {
+      console.warn('[Ellen] PINECONE_API_KEY missing; retrieval will be skipped');
+      this.pinecone = null;
+      this.pineconeAvailable = false;
+    }
+
+    // Check Voyage embeddings availability
+    const voyageKey = process.env.VOYAGE_API_KEY;
+    if (voyageKey && voyageKey !== 'YOUR_VOYAGE_API_KEY_HERE') {
+      this.voyageAvailable = true;
+    } else {
+      console.warn('[Ellen] VOYAGE_API_KEY missing; retrieval will be skipped');
+      this.voyageAvailable = false;
+    }
 
     this.sessionStorage = new EllenSessionStorage();
     this.contextManager = new ContextManager();
+    this.stateMonitor = new UserStateMonitor();
+    this.intentRouter = new IntentRouterTool();
+    this.multiToolOptimizer = new MultiToolOptimizer();
+    this.multiToolOrchestrator = new StateAwareMultiToolOrchestrator(
+      this.intentRouter,
+      queryOptimizer,
+      this.contextManager,
+      ellenTools as any
+    );
   }
 
   async processRequest(request: EllenRequest): Promise<EllenResponse> {
@@ -111,23 +155,138 @@ export class EllenOrchestrator {
     // Reset optimization hints for new request
     this.queryOptimizationHints = {};
     
-    // Step 1: Parallel sentiment analysis and query type detection
-    const [sentiment, queryType] = await Promise.all([
-      optimization.parallelizable.includes('sentiment_analysis') 
-        ? this.analyzeSentimentIfNeeded(request)
-        : Promise.resolve(null),
-      request.queryType || this.detectQueryType(request)
-    ]);
+    // Ensure we don't attempt retrieval if vector store is unavailable
+    if (!this.pineconeAvailable || !this.voyageAvailable) {
+      this.queryOptimizationHints.skipRetrieval = true;
+    }
+
+    // Determine if this is the first turn (no prior conversation)
+    const conversationHistory = request.context?.priorTurns?.map(turn => ({
+      role: turn.role as 'user' | 'assistant' | 'system',
+      content: turn.content
+    })) || [];
+    const isFirstTurn = conversationHistory.length === 0;
     
-    // If high frustration detected, route to meta-tools first
-    if (sentiment && sentiment.frustrationLevel >= 6) {
-      return await this.handleFrustration(request, sentiment, sessionId);
+    // Step 1: INITIAL ROUTING
+    // For first turn: use Intent Router to pick the primary tool
+    // For subsequent turns: analyze user state to drive routing/switches
+    let userState: UserState | undefined = undefined;
+    if (isFirstTurn) {
+      const route = await this.intentRouter.routeIntent(request.message, {
+        sessionType: request.context?.sessionType,
+        learningGoal: request.context?.learningGoal,
+        activeTask: request.context?.activeTask,
+      });
+      this.currentTool = route.suggestedTool || 'socratic_tool';
+      console.log('[IntentRouter] First turn tool:', this.currentTool, 'intent:', route.primaryIntent, 'depth:', route.depth, 'confidence:', route.confidence);
+    } else {
+      userState = await this.stateMonitor.analyzeState(
+        request.message,
+        conversationHistory,
+        this.currentTool
+      );
     }
     
-    // Step 2: Select routing loop based on query type (consider sentiment and optimizations)
+    // Log state for debugging
+    if (userState) {
+      console.log('[UserState]', {
+        sentiment: userState.sentiment.type,
+        frustration: userState.sentiment.frustrationLevel,
+        intent: userState.intent.current,
+        depth: userState.depth.current,
+        toolSwitch: userState.tooling.suggestedTool,
+        progression: userState.dynamics.progressionPattern
+      });
+    }
+    
+    // Check if multi-tool orchestration is needed based on state changes
+    const needsMultiTool = userState ? this.shouldUseMultiTool(userState, this.previousState) : false;
+    
+    if (needsMultiTool) {
+      // Pre-warm predicted tools for better performance
+      const predictedTools = this.multiToolOptimizer.predictNextTools(
+        sessionId || 'anonymous',
+        userState,
+        []
+      );
+      await this.multiToolOptimizer.preWarmTools(predictedTools, {
+        intent: userState.intent.current,
+        depth: userState.depth.current
+      });
+      
+      // Use multi-tool orchestrator
+      const multiResult = await this.multiToolOrchestrator.orchestrate(
+        request.message,
+        userState,
+        this.previousState,
+        sessionId
+      );
+      
+      // Record pattern for future optimization
+      if (sessionId) {
+        this.multiToolOptimizer.recordPattern(sessionId, multiResult.pattern);
+      }
+      
+      // Store current state for next turn
+      this.previousState = userState;
+      
+      // Format multi-tool response
+      const resp = this.formatMultiToolResponse(multiResult, sessionId);
+      // Attach lightweight debug info for dev observability
+      try {
+        (resp as any).debugTrace = {
+          multiTool: true,
+          pattern: multiResult?.pattern,
+          state: userState ? {
+            sentiment: userState.sentiment,
+            intent: userState.intent,
+            depth: userState.depth,
+            tooling: userState.tooling,
+          } : undefined,
+          infrastructure: {
+            pineconeAvailable: this.pineconeAvailable,
+            voyageAvailable: this.voyageAvailable,
+            pineconeIndex: process.env.PINECONE_INDEX_NAME || 'mookti-vectors',
+          }
+        };
+      } catch {}
+      return resp;
+    }
+    
+    // Store current state for next turn (even if not using multi-tool)
+    if (userState) {
+      this.previousState = userState;
+    }
+    
+    // Build route decision (intent/depth/tool/retrieval)
+    const routeDecision = await this.intentRouter.routeIntent(request.message, {
+      sessionType: request.context?.sessionType,
+      learningGoal: request.context?.learningGoal,
+      activeTask: request.context?.activeTask,
+      priorTurns: conversationHistory
+    });
+    if (isFirstTurn && routeDecision?.suggestedTool) {
+      this.currentTool = routeDecision.suggestedTool;
+    }
+    
+    // Handle high frustration immediately (normalize to 0–1 scale)
+    const currentFrustration = userState ? this.normalizeFrustration(userState.sentiment.frustrationLevel) : 0;
+    if (userState && currentFrustration >= 0.6) {
+      return await this.handleFrustrationV2(request, userState, sessionId);
+    }
+    
+    // Handle tool switch if needed (V2 improvement)
+    if (userState && this.stateMonitor.needsToolSwitch(userState)) {
+      const suggestedTool = userState.tooling.suggestedTool || 
+                           this.stateMonitor.selectToolFromState(userState);
+      console.log(`[ToolSwitch] ${this.currentTool} → ${suggestedTool} (reason: ${userState.tooling.switchReason || 'state change'})`);
+      this.currentTool = suggestedTool;
+    }
+    
+    // Step 2: Select routing loop based on state (V2: state-driven, not query-type driven)
     const routingLoop = await this.selectRoutingLoop(
-      queryType, 
-      request.toolOverride || sentiment?.suggestedTool,
+      routeDecision,
+      isFirstTurn ? this.currentTool : (request.toolOverride || this.currentTool),
       optimization
     );
     
@@ -158,7 +317,7 @@ export class EllenOrchestrator {
     // Step 5: Conditionally retrieve content (ONLY if in routing loop)
     let retrievalResults = [];
     if (routingLoop.includes('retrieval_aggregator')) {
-      retrievalResults = await this.retrieveContent(rewrittenQuery, queryType);
+      retrievalResults = await this.retrieveContent(rewrittenQuery, routeDecision.primaryIntent || 'understand');
       console.log(`[Retrieval] Content retrieved (${Date.now() - startTime}ms)`);
     } else {
       console.log(`[Retrieval] Skipped retrieval (saved ~1200ms)`);
@@ -183,6 +342,39 @@ export class EllenOrchestrator {
     
     // Step 8: Format response with citations
     const response = this.formatResponse(toolResults, retrievalResults);
+    // Attach model id and debug trace for dev
+    try {
+      const modelId = (modelRouting as any)?.model?.modelId || (modelRouting as any)?.modelId;
+      (response as any).model = modelId;
+      (response as any).debugTrace = {
+        multiTool: false,
+        queryType: routeDecision?.primaryIntent || 'understand',
+        routingLoop,
+        primaryTool,
+        model: modelId,
+        optimization: {
+          skipContextRewrite: optimization?.skipContextRewrite,
+          skipRetrieval: optimization?.skipRetrieval || this.queryOptimizationHints?.skipRetrieval,
+        },
+        router: {
+          primaryIntent: routeDecision?.primaryIntent,
+          depth: routeDecision?.depth,
+          needsRetrieval: routeDecision?.needsRetrieval,
+          suggestedTool: routeDecision?.suggestedTool,
+        },
+        state: userState ? {
+          sentiment: userState.sentiment,
+          intent: userState.intent,
+          depth: userState.depth,
+          tooling: userState.tooling,
+        } : undefined,
+        infrastructure: {
+          pineconeAvailable: this.pineconeAvailable,
+          voyageAvailable: this.voyageAvailable,
+          pineconeIndex: process.env.PINECONE_INDEX_NAME || 'mookti-vectors',
+        }
+      };
+    } catch {}
     
     // Add actual tools used to response (including preprocessing steps)
     response.toolsUsed = routingLoop;
@@ -195,7 +387,7 @@ export class EllenOrchestrator {
         role: 'user',
         content: request.message,
         metadata: {
-          processType: this.inferProcessType(request, queryType)
+          processType: this.inferProcessType(request, routeDecision.primaryIntent || 'understand')
         }
       });
 
@@ -207,12 +399,12 @@ export class EllenOrchestrator {
         metadata: {
           toolsUsed: selectedTools, // Use all selected tools
           citations: response.citations,
-          retrievalNamespaces: this.selectNamespaces(queryType)
+          retrievalNamespaces: this.selectNamespacesFromIntent(routeDecision.primaryIntent || 'understand', routeDecision.depth)
         }
       });
 
       // Update process metrics
-      await this.updateSessionMetrics(sessionId, toolResults, queryType);
+      await this.updateSessionMetrics(sessionId, toolResults, routeDecision.primaryIntent || 'understand');
     }
     
     // Step 9: Track Growth Compass metrics if applicable
@@ -226,7 +418,9 @@ export class EllenOrchestrator {
     }
     
     // Cache successful responses for simple queries
-    if (!sentiment || sentiment.frustrationLevel < 3) {
+    // Be defensive on first turn where userState may be undefined
+    const frustrationLevel = this.normalizeFrustration(userState?.sentiment?.frustrationLevel ?? 0);
+    if (frustrationLevel < 0.3) {
       queryOptimizer.cacheResult(request, response);
     }
     
@@ -242,60 +436,9 @@ export class EllenOrchestrator {
     return response;
   }
 
-  private async detectQueryType(request: EllenRequest): Promise<string> {
-    const systemPrompt = `You are a query classifier for an educational AI assistant.
-    Analyze the user's message and return a JSON object with:
-    1. category: One of [learning, coaching, planning, reflection, growth]
-    2. needs_retrieval: true if the query needs external knowledge/content, false for simple facts, calculations, or meta-conversation
-    
-    Examples:
-    - "What is 2+2?" → {"category": "learning", "needs_retrieval": false}
-    - "What is photosynthesis?" → {"category": "learning", "needs_retrieval": true}
-    - "Thanks" → {"category": "reflection", "needs_retrieval": false}
-    - "Explain quantum mechanics" → {"category": "learning", "needs_retrieval": true}
-    
-    Return ONLY valid JSON.`;
-
-    // Use Tier 1 (Simple/Fast) for query classification
-    const { model } = modelSelection.selectModel({
-      requiresReasoning: false
-    });
-
-    const { text } = await generateText({
-      model,
-      system: systemPrompt,
-      prompt: request.message,
-      temperature: 0.1
-    });
-
-    try {
-      // Strip markdown code blocks if present
-      let cleanText = text || '{}';
-      if (cleanText.includes('```json')) {
-        cleanText = cleanText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      }
-      cleanText = cleanText.trim();
-      
-      const result = JSON.parse(cleanText);
-      console.log(`[QueryClassification] Model returned:`, result);
-      
-      // Store the retrieval decision for use by query optimizer
-      if (result.needs_retrieval === false) {
-        console.log(`[QueryClassification] Marking retrieval as skippable`);
-        this.queryOptimizationHints = { 
-          ...this.queryOptimizationHints, 
-          skipRetrieval: true 
-        };
-      }
-      return result.category?.toLowerCase() || 'learning';
-    } catch (e) {
-      console.log(`[QueryClassification] Failed to parse JSON:`, text?.substring(0, 100));
-      return 'learning';
-    }
-  }
 
   private async selectRoutingLoop(
-    queryType: string, 
+    routeDecision: { primaryIntent?: string; depth?: any; needsRetrieval?: boolean; suggestedTool?: string },
     toolOverride?: string,
     optimization?: any
   ): Promise<string[]> {
@@ -310,7 +453,7 @@ export class EllenOrchestrator {
     // Only add retrieval_aggregator if not skipped
     // Check both query optimizer AND our Tier 1 model's decision
     const shouldSkipRetrieval = optimization?.skipRetrieval || this.queryOptimizationHints?.skipRetrieval;
-    if (!shouldSkipRetrieval) {
+    if (!shouldSkipRetrieval && routeDecision?.needsRetrieval) {
       routingLoop.push('retrieval_aggregator');
     }
     
@@ -321,13 +464,13 @@ export class EllenOrchestrator {
       const message = this.currentRequest?.message || '';
       
       // Check if this query needs sophisticated tool selection
-      if (this.needsAdvancedToolSelection(message, queryType)) {
+      if (this.needsAdvancedToolSelection(message, routeDecision?.primaryIntent || 'understand')) {
         // Use Tier 3 model for complex tool orchestration
-        const tools = await this.selectToolsWithAI(message, queryType);
+        const tools = await this.selectToolsWithAI(message, routeDecision?.primaryIntent || 'understand');
         routingLoop.push(...tools);
       } else {
         // Simple cases: use rule-based selection
-        const selectedTool = this.selectBestToolForQuery(queryType, message);
+        const selectedTool = this.selectBestToolForQuery(routeDecision?.primaryIntent || 'understand', message);
         routingLoop.push(selectedTool);
       }
     }
@@ -437,16 +580,42 @@ Examples:
     }
   }
   
-  private selectBestToolForQuery(queryType: string, message: string): string {
+  private selectBestToolForQuery(intent: string, message: string): string {
     const lowerMessage = message.toLowerCase();
     
-    // Query type specific tool selection
-    switch (queryType) {
+    // V2: CHECK WRITING FIRST (before defaulting to socratic)
+    const writingIndicators = ['thesis', 'essay', 'write', 'paper', 'draft', 'edit', 'paragraph', 'introduction', 'conclusion'];
+    if (writingIndicators.some(ind => lowerMessage.includes(ind))) {
+      return 'writing_coach';
+    }
+    
+    // V2: CHECK PROBLEM-SOLVING
+    const problemIndicators = ['solve', 'calculate', 'work through', 'help me with', 'stuck on', 'how to solve'];
+    if (problemIndicators.some(ind => lowerMessage.includes(ind))) {
+      return 'problem_solver'; // Will fallback to socratic until implemented
+    }
+    
+    // V2: PRACTICAL LEARNING (not deep Socratic)
+    if (lowerMessage.includes('how do i') || 
+        lowerMessage.includes('steps to') ||
+        lowerMessage.includes('for my') || 
+        lowerMessage.includes('course') ||
+        lowerMessage.includes('assignment')) {
+      return 'practical_guide'; // Will fallback to socratic until implemented
+    }
+    
+    // V2: QUICK ANSWERS
+    if (lowerMessage.includes('what is') ||
+        lowerMessage.includes('define') ||
+        lowerMessage.includes('when was') ||
+        lowerMessage.includes('quick')) {
+      return 'quick_answer'; // Will fallback to socratic until implemented
+    }
+    
+    // Intent-specific tool selection
+    switch (intent) {
       case 'coaching':
-        // Only select specific coaching tools for clear intent
-        if (lowerMessage.includes('write') || lowerMessage.includes('essay') || lowerMessage.includes('paper')) {
-          return 'writing_coach';
-        }
+        // More specific coaching tools
         if (lowerMessage.includes('note') || lowerMessage.includes('lecture')) {
           return 'note_assistant';
         }
@@ -456,9 +625,10 @@ Examples:
         if (lowerMessage.includes('office hour') || lowerMessage.includes('professor')) {
           return 'office_hours_coach';
         }
-        // Default to Socratic for general coaching
-        return 'socratic_tool';
+        // V2: Don't default to socratic for coaching
+        return 'writing_coach'; // More appropriate default for coaching
         
+      case 'organize':
       case 'planning':
         if (lowerMessage.includes('focus') || lowerMessage.includes('pomodoro')) {
           return 'focus_session';
@@ -471,10 +641,10 @@ Examples:
       case 'growth':
         return 'growth_compass_tracker';
         
+      case 'understand':
+      case 'learn':
       case 'learning':
       default:
-        // Only use specialized tools for very specific requests
-        
         // Practice/testing requests
         if (lowerMessage.includes('quiz me') || lowerMessage.includes('test me') || 
             lowerMessage.includes('practice questions')) {
@@ -518,8 +688,6 @@ Examples:
     }
   }
   
-  private currentRequest: EllenRequest | null = null;
-
   private async rewriteQuery(request: EllenRequest): Promise<string> {
     if (!request.context?.priorTurns?.length) {
       return request.message;
@@ -549,32 +717,39 @@ Examples:
     return text || request.message;
   }
 
-  private async retrieveContent(query: string, queryType: string): Promise<any[]> {
-    // Determine which namespaces to search based on query type
-    const namespaces = this.selectNamespaces(queryType);
+  private async retrieveContent(query: string, primaryIntent: string): Promise<any[]> {
+    // Determine which namespaces to search based on intent/depth
+    const namespaces = this.selectNamespacesFromIntent(primaryIntent);
     
-    // Generate embedding for the query
-    const embeddingResponse = await fetch('https://api.voyageai.com/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.VOYAGE_API_KEY}`
-      },
-      body: JSON.stringify({
-        input: query,
-        model: 'voyage-3'
-      })
-    });
+    try {
+      // Generate embedding for the query
+      const embeddingResponse = await fetch('https://api.voyageai.com/v1/embeddings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.VOYAGE_API_KEY}`
+        },
+        body: JSON.stringify({
+          input: query,
+          model: 'voyage-3'
+        })
+      });
 
-    const embeddingData = await embeddingResponse.json() as any;
-    const queryEmbedding = embeddingData.data[0].embedding;
+      if (!embeddingResponse.ok) {
+        console.warn('[Retrieval] Voyage embeddings request failed:', await embeddingResponse.text());
+        return [{ id: 'llm-fallback', score: 0, metadata: { text: null, source: 'LLM Knowledge Base', fallback: true } }];
+      }
 
-    // Query multiple namespaces in parallel
-    const retrievalPromises = namespaces.map(namespace =>
-      this.queryNamespace(namespace, queryEmbedding)
-    );
+      const embeddingData = await embeddingResponse.json() as any;
+      const queryEmbedding = embeddingData.data?.[0]?.embedding;
+      if (!queryEmbedding) {
+        console.warn('[Retrieval] No embedding returned; using LLM fallback');
+        return [{ id: 'llm-fallback', score: 0, metadata: { text: null, source: 'LLM Knowledge Base', fallback: true } }];
+      }
 
-    const results = await Promise.all(retrievalPromises);
+      // Query multiple namespaces in parallel
+      const retrievalPromises = namespaces.map(namespace => this.queryNamespace(namespace, queryEmbedding));
+      const results = await Promise.all(retrievalPromises);
     
     // Flatten and filter empty results
     const flatResults = results.flat().filter(r => r && r.score);
@@ -586,7 +761,7 @@ Examples:
         userId: this.currentRequest?.context?.userId,
         sessionId: this.currentRequest?.context?.sessionId,
         timestamp: Date.now(),
-        queryType,
+        queryType: primaryIntent,
         namespace: namespaces[0]
       });
       
@@ -610,23 +785,30 @@ Examples:
     }
 
     return flatResults;
+    } catch (err) {
+      console.warn('[Retrieval] Embedding/retrieval error; using LLM fallback:', (err as any)?.message || err);
+      return [{ id: 'llm-fallback', score: 0, metadata: { text: null, source: 'LLM Knowledge Base', fallback: true } }];
+    }
   }
 
-  private selectNamespaces(queryType: string): string[] {
-    const namespaceMap: Record<string, string[]> = {
-      learning: ['public-core', 'public-remedial'],
-      coaching: ['public-coaching', 'public-writing'],
-      planning: ['public-growth', 'public-coaching'],
-      reflection: ['public-growth', 'public-core'],
-      growth: ['public-growth']
+  private selectNamespacesFromIntent(intent: string, depth?: any): string[] {
+    const map: Record<string, string[]> = {
+      understand: ['public-core', 'public-remedial'],
+      solve: ['public-core', 'public-remedial'],
+      explore: ['public-core'],
+      create: ['public-writing', 'public-core'],
+      evaluate: ['public-core', 'public-writing'],
+      organize: ['public-growth', 'public-core'],
+      regulate: ['public-growth'],
+      interact: ['public-core']
     };
-
-    return namespaceMap[queryType] || ['public-core'];
+    return map[intent] || ['public-core'];
   }
 
   private async queryNamespace(namespace: string, embedding: number[]): Promise<any[]> {
     try {
-      const index = this.pinecone.index('mookti-vectors');
+      const indexName = process.env.PINECONE_INDEX_NAME || 'mookti-vectors';
+      const index = this.pinecone!.index(indexName);
       const results = await index.namespace(namespace).query({
         vector: embedding,
         topK: 5,
@@ -977,7 +1159,7 @@ TECHNIQUES BY UTILITY:
     return [];
   }
 
-  private inferProcessType(request: EllenRequest, queryType: string): ProcessType {
+  private inferProcessType(request: EllenRequest, primaryIntent: string): ProcessType {
     // Infer process type from message and query type
     const message = request.message.toLowerCase();
     
@@ -994,19 +1176,24 @@ TECHNIQUES BY UTILITY:
       return 'exploration';
     }
     
-    // Default based on query type
-    switch (queryType) {
-      case 'coaching':
-      case 'writing':
+    // Default based on primary intent
+    switch (primaryIntent) {
+      case 'create':
         return 'creation';
-      case 'reflection':
+      case 'regulate':
         return 'focus';
+      case 'organize':
+        return 'focus';
+      case 'understand':
+      case 'solve':
+      case 'explore':
+      case 'evaluate':
       default:
         return 'exploration';
     }
   }
 
-  private async updateSessionMetrics(sessionId: string, toolResults: any, queryType: string): Promise<void> {
+  private async updateSessionMetrics(sessionId: string, toolResults: any, primaryIntent: string): Promise<void> {
     const metrics: any = {};
 
     // Track tool usage as strategy employment
@@ -1023,7 +1210,7 @@ TECHNIQUES BY UTILITY:
       metrics.retrievalAttempts = (metrics.retrievalAttempts || 0) + 1;
     }
 
-    if (queryType === 'reflection') {
+    if (toolResults.toolsUsed.includes('reflection_tool')) {
       metrics.reflectionsWritten = (metrics.reflectionsWritten || 0) + 1;
     }
 
@@ -1088,6 +1275,96 @@ TECHNIQUES BY UTILITY:
   /**
    * Handle frustrated or confused students with empathy and alternatives
    */
+  /**
+   * V2: Handle frustration using comprehensive UserState
+   */
+  private async handleFrustrationV2(
+    request: EllenRequest,
+    userState: UserState,
+    sessionId?: string
+  ): Promise<EllenResponse> {
+    const { metaTools } = await import('./ellen-tools/meta-tools');
+    
+    // Determine which meta-tool to use based on state
+    let toolToUse;
+    let toolParams;
+    
+    if (userState.dynamics.progressionPattern === 'stuck' && userState.dynamics.turnsAtCurrentDepth > 3) {
+      // User is stuck - suggest tool switch
+      toolToUse = metaTools.toolSwitchHandler;
+      toolParams = {
+        message: request.message,
+        currentTool: this.currentTool,
+        availableTools: Object.keys(ellenTools),
+        reason: `You seem stuck. Current pattern: ${userState.dynamics.progressionPattern}`
+      };
+    } else if (this.normalizeFrustration(userState.sentiment.frustrationLevel) >= 0.8) {
+      // High frustration - provide emotional support
+      toolToUse = metaTools.frustrationHandler;
+      toolParams = {
+        message: request.message,
+        previousAttempts: this.recentTools || [],
+        currentTool: this.currentTool,
+        frustrationLevel: this.normalizeFrustration(userState.sentiment.frustrationLevel)
+      };
+    } else if (userState.depth.requested && userState.depth.requested !== userState.depth.current) {
+      // Depth mismatch - adjust engagement level
+      toolToUse = metaTools.expectationClarifier;
+      toolParams = {
+        message: request.message,
+        context: request.context,
+        currentDepth: userState.depth.current,
+        requestedDepth: userState.depth.requested,
+        suggestion: `Would you like a ${userState.depth.requested} explanation instead?`
+      };
+    } else {
+      // General clarification needed
+      toolToUse = metaTools.expectationClarifier;
+      toolParams = {
+        message: request.message,
+        context: request.context,
+        userState: userState
+      };
+    }
+    
+    // Execute the meta-tool
+    const result = await toolToUse.execute(toolParams);
+    
+    // Track this interaction
+    if (sessionId) {
+      await this.sessionStorage.addMessage({
+        sessionId,
+        role: 'assistant',
+        content: result.content,
+        metadata: {
+          toolsUsed: [toolToUse.name],
+          // Store state analysis as generic metadata
+          ...{
+            userStateSentiment: userState.sentiment.type,
+            userStateFrustration: userState.sentiment.frustrationLevel,
+            userStateIntent: userState.intent.current,
+            userStateDepth: userState.depth.current
+          }
+        } as any
+      });
+    }
+    
+    // If tool switch was recommended, update current tool
+    if (result.recommendedTool) {
+      this.currentTool = result.recommendedTool;
+      console.log(`[MetaTool] Switched to ${result.recommendedTool} after frustration handling`);
+    }
+    
+    return {
+      response: result.content,
+      toolsUsed: [toolToUse.name],
+      suggestedFollowUp: result.suggestedFollowUp
+    };
+  }
+
+  /**
+   * Original handleFrustration method (kept for backward compatibility)
+   */
   private async handleFrustration(
     request: EllenRequest,
     sentiment: any,
@@ -1106,7 +1383,7 @@ TECHNIQUES BY UTILITY:
         currentTool: this.lastUsedTool || 'socratic_tool',
         availableTools: Object.keys(ellenTools)
       };
-    } else if (sentiment.frustrationLevel >= 8) {
+    } else if (this.normalizeFrustration(sentiment.frustrationLevel) >= 0.8) {
       toolToUse = metaTools.frustrationHandler;
       toolParams = {
         message: request.message,
@@ -1161,9 +1438,141 @@ TECHNIQUES BY UTILITY:
    */
   private trackToolUse(toolName: string) {
     this.lastUsedTool = toolName;
+    this.currentTool = toolName; // V2: Update current tool for state monitor
     this.recentTools.push(toolName);
     if (this.recentTools.length > 5) {
       this.recentTools.shift();
     }
+  }
+  
+  /**
+   * Determine if multi-tool orchestration should be used
+   */
+  private shouldUseMultiTool(currentState: UserState, previousState?: UserState): boolean {
+    // High frustration always triggers multi-tool consideration (normalize to 0–1)
+    if (this.normalizeFrustration(currentState.sentiment.frustrationLevel) >= 0.7) {
+      return true;
+    }
+    
+    // Intent change with previous state
+    if (previousState && currentState.intent.changed) {
+      return true;
+    }
+    
+    // Depth progression
+    if (previousState && currentState.depth.changeIndicator) {
+      return true;
+    }
+    
+    // Stuck pattern
+    if (currentState.dynamics.progressionPattern === 'stuck' && 
+        currentState.dynamics.turnsAtCurrentDepth > 3) {
+      return true;
+    }
+    
+    // Tool ineffectiveness (suggested tool differs from current)
+    if (currentState.tooling.suggestedTool && 
+        typeof currentState.tooling.currentToolAppropriate === 'string' &&
+        currentState.tooling.suggestedTool !== currentState.tooling.currentToolAppropriate) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  // Normalize frustration to a 0–1 scale for consistent comparisons
+  private normalizeFrustration(level: number): number {
+    if (level == null || Number.isNaN(level as any)) return 0;
+    const numeric = Number(level);
+    const scaled = numeric > 1 ? numeric / 10 : numeric;
+    return Math.max(0, Math.min(1, scaled));
+  }
+  
+  /**
+   * Format multi-tool orchestration result into EllenResponse
+   */
+  private formatMultiToolResponse(multiResult: any, sessionId?: string): EllenResponse {
+    // Combine responses from all executed tools
+    const combinedResponse = multiResult.executions
+      .filter((e: any) => e.success && e.result)
+      .map((e: any) => {
+        if (typeof e.result === 'string') {
+          return e.result;
+        } else if (e.result.response) {
+          return e.result.response;
+        } else if (e.result.content) {
+          return e.result.content;
+        } else {
+          return JSON.stringify(e.result);
+        }
+      })
+      .join('\n\n');
+    
+    // Extract tool names
+    const toolsUsed = multiResult.executions.map((e: any) => e.tool);
+    
+    // Generate follow-up suggestions based on pattern
+    const suggestedFollowUp = this.generateMultiToolFollowUp(multiResult.pattern);
+    
+    // Log performance metrics
+    console.log(`[MultiTool] Pattern: ${multiResult.pattern.type}`);
+    console.log(`[MultiTool] Tools executed: ${toolsUsed.join(', ')}`);
+    console.log(`[MultiTool] Total time: ${multiResult.metadata.totalExecutionTime}ms`);
+    console.log(`[MultiTool] Effectiveness: ${(multiResult.metadata.patternEffectiveness * 100).toFixed(1)}%`);
+    
+    return {
+      response: combinedResponse || "I'm having trouble processing that request. Let me try a different approach.",
+      toolsUsed,
+      suggestedFollowUp,
+      sessionId,
+      growthMetrics: {
+        sessionContribution: multiResult.metadata.patternEffectiveness,
+        reflectionPrompt: this.getReflectionPrompt(multiResult.pattern.type)
+      }
+    };
+  }
+  
+  /**
+   * Generate follow-up questions based on orchestration pattern
+   */
+  private generateMultiToolFollowUp(pattern: any): string[] {
+    const followUpMap: Record<string, string[]> = {
+      handoff: [
+        "Would you like to explore this from a different angle?",
+        "Should we dive deeper into any specific aspect?",
+        "Is this the kind of help you were looking for?"
+      ],
+      parallel: [
+        "Which aspect would you like to focus on next?",
+        "Should we practice applying any of these concepts?",
+        "Do you see how these ideas connect?"
+      ],
+      chain: [
+        "Are you ready for the next level of complexity?",
+        "Should we review any of the earlier steps?",
+        "What questions do you have about the progression?"
+      ],
+      fallback: [
+        "Is this approach working better for you?",
+        "What specifically would be most helpful right now?",
+        "Should we try a completely different strategy?"
+      ]
+    };
+    
+    return followUpMap[pattern.type] || ["How can I help you further?"];
+  }
+  
+  /**
+   * Get reflection prompt based on pattern type
+   */
+  private getReflectionPrompt(patternType: string): string {
+    const reflectionMap: Record<string, string> = {
+      handoff: "How did the shift in approach help your understanding?",
+      parallel: "Which perspective was most valuable for you?",
+      chain: "How did building up complexity help your learning?",
+      fallback: "What made this approach more effective?"
+    };
+    
+    return reflectionMap[patternType] || "How did that explanation work for you?";
   }
 }

@@ -1,0 +1,421 @@
+[1m[36mTesting GPT-5 Model Only[0m
+
+[36mRunning 57 diverse student queries[0m
+
+[1m[35m================================================================================[0m
+[1mTesting GPT-5 (model: gpt-5)[0m
+
+[1m[GPT-5 - Test 1/57][0m [33mLiterature[0m
+  Query: "I'm reading Romeo and Juliet for class - what's the main the..."
+AI SDK Warning System: To turn off warning logging, set the AI_SDK_LOG_WARNINGS global to false.
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ❌ surface (expected: guided)
+  Overall: ❌
+
+[1m[GPT-5 - Test 2/57][0m [33mLiterature[0m
+  Query: "I need to write an essay about postcolonial themes in Things..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ❌ understand (expected: evaluate)
+  Depth: ✅ guided (expected: guided)
+  Overall: ❌
+
+[1m[GPT-5 - Test 3/57][0m [33mCreative Writing[0m
+  Query: "I'm trying to write a haiku about autumn for my poetry assig..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ create (expected: create)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 4/57][0m [33mHistory[0m
+  Query: "Can you help me understand what caused the French Revolution..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 5/57][0m [33mHistory[0m
+  Query: "I'm curious about the Renaissance - what was it like?..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ⚡ understand (expected: explore)
+    [33mHalf-credit: Found in secondary intents[0m
+  Depth: ❌ surface (expected: guided)
+  Overall: ❌
+
+[1m[GPT-5 - Test 6/57][0m [33mPolitical Science[0m
+  Query: "Compare FDR's New Deal with Reagan's economic policies..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 7/57][0m [33mPsychology[0m
+  Query: "I have to present in front of the whole class tomorrow and I..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ regulate (expected: regulate)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 8/57][0m [33mNeuroscience[0m
+  Query: "I'm studying neuroscience - can you explain how addiction af..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 9/57][0m [33mPsychology[0m
+  Query: "I keep procrastinating on my homework - any quick tips?..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ regulate (expected: regulate)
+  Depth: ✅ surface (expected: surface)
+  Overall: ✅
+
+[1m[GPT-5 - Test 10/57][0m [33mBusiness[0m
+  Query: "I'm working on a business plan for my entrepreneurship class..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ create (expected: create)
+  Depth: ❌ deep (expected: guided)
+  Overall: ❌
+
+[1m[GPT-5 - Test 11/57][0m [33mFinance[0m
+  Query: "My parents want me to invest my summer job savings - are bon..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ evaluate (expected: evaluate)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 12/57][0m [33mEconomics[0m
+  Query: "I don't get supply and demand curves - can you explain with ..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 13/57][0m [33mMusic Theory[0m
+  Query: "I'm composing a piece for my music theory class and want to ..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ create (expected: create)
+  Depth: ❌ deep (expected: guided)
+  Overall: ❌
+
+[1m[GPT-5 - Test 14/57][0m [33mArt History[0m
+  Query: "What's impressionism? I keep hearing about it in art class..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ surface (expected: surface)
+  Overall: ✅
+
+[1m[GPT-5 - Test 15/57][0m [33mCeramics[0m
+  Query: "I'm interested in trying different pottery glazing technique..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ explore (expected: explore)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 16/57][0m [33mSpanish[0m
+  Query: "I'm confused about when to use the subjunctive in Spanish - ..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 17/57][0m [33mJapanese[0m
+  Query: "How do I write 'hello, nice to meet you' in Japanese?..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ surface (expected: surface)
+  Overall: ✅
+
+[1m[GPT-5 - Test 18/57][0m [33mLinguistics[0m
+  Query: "For my linguistics paper - how did Latin evolve into the Rom..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ❌ deep (expected: guided)
+  Overall: ❌
+
+[1m[GPT-5 - Test 19/57][0m [33mPhilosophy[0m
+  Query: "I've been thinking about free will vs determinism for my phi..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ explore (expected: explore)
+  Depth: ✅ deep (expected: deep)
+  Overall: ✅
+
+[1m[GPT-5 - Test 20/57][0m [33mEthics[0m
+  Query: "Can we discuss the trolley problem? I need to understand it ..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 21/57][0m [33mPhilosophy[0m
+  Query: "Critique Kant's categorical imperative in modern contexts..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ evaluate (expected: evaluate)
+  Depth: ❌ guided (expected: deep)
+  Overall: ❌
+
+[1m[GPT-5 - Test 22/57][0m [33mMedicine[0m
+  Query: "My grandma has diabetes - what are the main symptoms I shoul..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ surface (expected: surface)
+  Overall: ✅
+
+[1m[GPT-5 - Test 23/57][0m [33mNutrition[0m
+  Query: "I need a simple meal prep plan for my dorm room..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ⚡ create (expected: organize)
+    [33mHalf-credit: Found in secondary intents[0m
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 24/57][0m [33mHealth[0m
+  Query: "I've been having trouble sleeping since finals started - wha..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ regulate (expected: regulate)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 25/57][0m [33mEnvironmental Science[0m
+  Query: "I want to make my apartment more eco-friendly - what renewab..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ❌ understand (expected: explore)
+  Depth: ✅ guided (expected: guided)
+  Overall: ❌
+
+[1m[GPT-5 - Test 26/57][0m [33mEnvironmental Science[0m
+  Query: "My friend says electric cars aren't actually better for the ..."
+  [31mERROR: The operation was aborted due to timeout[0m
+
+[1m[GPT-5 - Test 27/57][0m [33mClimate Science[0m
+  Query: "For my climate science project - explain the carbon cycle an..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 28/57][0m [33mLaw[0m
+  Query: "I'm studying for the LSAT - can you explain civil vs crimina..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 29/57][0m [33mLaw[0m
+  Query: "My landlord won't return my deposit - what are my rights?..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 30/57][0m [33mConstitutional Law[0m
+  Query: "Analyze the constitutionality of government surveillance pro..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ evaluate (expected: evaluate)
+  Depth: ❌ deep (expected: guided)
+  Overall: ❌
+
+[1m[GPT-5 - Test 31/57][0m [33mEducation[0m
+  Query: "I'm student teaching next semester - help me design a curric..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ create (expected: create)
+  Depth: ❌ deep (expected: guided)
+  Overall: ❌
+
+[1m[GPT-5 - Test 32/57][0m [33mTeaching[0m
+  Query: "The kids in my tutoring group won't pay attention - what sho..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ⚡ solve (expected: regulate)
+    [33mHalf-credit: Found in secondary intents[0m
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 33/57][0m [33mScience Education[0m
+  Query: "I need to create an engaging lesson about photosynthesis for..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ create (expected: create)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 34/57][0m [33mAnthropology[0m
+  Query: "What's cultural relativism? It came up in my anthro reading..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ surface (expected: surface)
+  Overall: ✅
+
+[1m[GPT-5 - Test 35/57][0m [33mSociology[0m
+  Query: "I'm researching how social media affects teen identity for m..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ explore (expected: explore)
+  Depth: ✅ deep (expected: deep)
+  Overall: ✅
+
+[1m[GPT-5 - Test 36/57][0m [33mSociology[0m
+  Query: "Let's debate nature vs nurture - I need different perspectiv..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ❌ explore (expected: interact)
+  Depth: ❌ guided (expected: deep)
+  Overall: ❌
+
+[1m[GPT-5 - Test 37/57][0m [33mStatistics[0m
+  Query: "How do I find the mean of this dataset: [23, 45, 67, 12, 89,..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ⚡ understand (expected: solve)
+    [33mHalf-credit: Found in secondary intents[0m
+  Depth: ❌ surface (expected: guided)
+  Overall: ❌
+
+[1m[GPT-5 - Test 38/57][0m [33mAlgebra[0m
+  Query: "I'm stuck on quadratic equations - can you walk me through t..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 39/57][0m [33mApplied Math[0m
+  Query: "Help me develop a mathematical model for population growth i..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ create (expected: create)
+  Depth: ✅ deep (expected: deep)
+  Overall: ✅
+
+[1m[GPT-5 - Test 40/57][0m [33mPersonal Development[0m
+  Query: "I have 3 exams tomorrow and I need to focus NOW..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ regulate (expected: regulate)
+  Depth: ✅ surface (expected: surface)
+  Overall: ✅
+
+[1m[GPT-5 - Test 41/57][0m [33mCareer Planning[0m
+  Query: "I'm graduating soon and thinking about becoming a teacher - ..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ organize (expected: organize)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 42/57][0m [33mPersonal Development[0m
+  Query: "Everyone in my program seems smarter than me - dealing with ..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ regulate (expected: regulate)
+  Depth: ❌ guided (expected: deep)
+  Overall: ❌
+
+[1m[GPT-5 - Test 43/57][0m [33mGardening[0m
+  Query: "The tomatoes in my dorm garden have yellow leaves - what's w..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ⚡ understand (expected: solve)
+    [33mHalf-credit: Found in secondary intents[0m
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 44/57][0m [33mAgriculture[0m
+  Query: "Plan a crop rotation for my community garden plot..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ organize (expected: organize)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 45/57][0m [33mAgriculture[0m
+  Query: "I'm interested in sustainable farming - can we explore perma..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ explore (expected: explore)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 46/57][0m [33mCooking[0m
+  Query: "I have chicken, rice, and some veggies - what can I make for..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ create (expected: create)
+  Depth: ❌ surface (expected: guided)
+  Overall: ❌
+
+[1m[GPT-5 - Test 47/57][0m [33mFood Science[0m
+  Query: "My culinary professor mentioned the Maillard reaction - what..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ surface (expected: surface)
+  Overall: ✅
+
+[1m[GPT-5 - Test 48/57][0m [33mBaking[0m
+  Query: "My sourdough starter isn't bubbling - how do I fix it?..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ solve (expected: solve)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 49/57][0m [33mFitness[0m
+  Query: "I only have 15 minutes between classes - need a quick workou..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ organize (expected: organize)
+  Depth: ✅ surface (expected: surface)
+  Overall: ✅
+
+[1m[GPT-5 - Test 50/57][0m [33mStrength Training[0m
+  Query: "Can you check my deadlift form? I'll describe what I'm doing..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ⚡ evaluate (expected: understand)
+    [33mHalf-credit: Found in secondary intents[0m
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 51/57][0m [33mRunning[0m
+  Query: "Review my marathon training plan - first race in 4 months..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ evaluate (expected: evaluate)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 52/57][0m [33mProgramming[0m
+  Query: "My code has a syntax error on line 42 - help!..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ solve (expected: solve)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 53/57][0m [33mComputer Science[0m
+  Query: "I'm learning recursion but it's confusing - can you explain ..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ❌ guided (expected: surface)
+  Overall: ❌
+
+[1m[GPT-5 - Test 54/57][0m [33mDatabase Design[0m
+  Query: "I need to design a database schema for my capstone project..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ create (expected: create)
+  Depth: ✅ deep (expected: deep)
+  Overall: ✅
+
+[1m[GPT-5 - Test 55/57][0m [33mPhysics[0m
+  Query: "What's the difference between speed and velocity?..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ understand (expected: understand)
+  Depth: ✅ surface (expected: surface)
+  Overall: ✅
+
+[1m[GPT-5 - Test 56/57][0m [33mEngineering[0m
+  Query: "I'm stuck on this thermodynamics problem about heat engines..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ solve (expected: solve)
+  Depth: ✅ guided (expected: guided)
+  Overall: ✅
+
+[1m[GPT-5 - Test 57/57][0m [33mPhysics[0m
+  Query: "I'm fascinated by quantum mechanics - let's explore the doub..."
+AI SDK Warning: The "temperature" setting is not supported by this model - temperature is not supported for reasoning models
+  Intent: ✅ explore (expected: explore)
+  Depth: ✅ deep (expected: deep)
+  Overall: ✅
+
+
+[1m[36m================================================================================[0m
+[1m[36mGPT-5 TEST RESULTS[0m
+
+[1mScores:[0m
+  Intent Score (with half-credit): 87.7%
+  Depth Score: 75.4%
+  Overall Score: 66.2%
+  Errors: 1/57
+
+[32mResults saved to gpt5-test-results.json[0m

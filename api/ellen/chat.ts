@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
         sessionType: body.sessionType,
         sessionGoal: body.sessionGoal
       },
-      queryType: body.queryType,
       toolOverride: body.toolOverride
     });
 

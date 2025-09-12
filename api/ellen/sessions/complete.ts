@@ -116,6 +116,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Queue conversation embedding job (end-of-session search indexing)
+    if (completedSession.userId) {
+      jobPromises.push(
+        jobQueue.enqueue('conversation-embed', {
+          sessionId: completedSession.id,
+          userId: completedSession.userId,
+        })
+      );
+    }
+
     // Wait for all jobs to be enqueued (but not processed)
     const jobIds = await Promise.all(jobPromises);
 

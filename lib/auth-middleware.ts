@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isDevMode, getDevUser } from './config/dev-mode';
+import { verifyFirebaseToken } from './auth-native';
 
 // TEMPORARY: Simple API key authentication for preview deployment
 // TODO: Replace with Firebase auth before production launch (see MOOKTI_COMPREHENSIVE_DEV_PLAN_V5.md)
@@ -22,20 +23,22 @@ export async function verifyApiAuth(request: NextRequest): Promise<{ success: bo
     return { success: false, error: 'Missing Authorization header' };
   }
 
-  // For preview, use a simple Bearer token
-  // This should be set as an environment variable
+  // Accept API key for preview and service calls
   const apiKey = process.env.MOOKTI_API_KEY || 'mookti-preview-key-2025';
-  
-  if (authHeader !== `Bearer ${apiKey}`) {
-    return { success: false, error: 'Invalid API key' };
+  if (authHeader === `Bearer ${apiKey}`) {
+    return { success: true, userId: 'preview-user-001' };
   }
 
-  // For now, use a test user ID
-  // In production, decode the actual user from Firebase token
-  return { 
-    success: true, 
-    userId: 'preview-user-001' 
-  };
+  // Otherwise treat as Firebase ID token
+  try {
+    const result = await verifyFirebaseToken(authHeader);
+    if (result.success) {
+      return { success: true, userId: result.userId };
+    }
+    return { success: false, error: String(result.error || 'Invalid token') };
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Auth verification failed' };
+  }
 }
 
 // Helper to create unauthorized response
